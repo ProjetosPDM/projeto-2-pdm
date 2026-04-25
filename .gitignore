@@ -45,5 +45,5 @@ app-example
 .env
 
 # IDES
-.vscode
-.idea
+.vscode/
+.idea/
