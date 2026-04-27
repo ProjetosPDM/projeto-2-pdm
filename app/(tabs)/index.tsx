@@ -3,12 +3,16 @@ import { StyleSheet, Text, View, ScrollView, TouchableOpacity, StatusBar } from 
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { MapPin, Clock, ChevronRight, CheckCircle2, Calendar } from "lucide-react-native";
 
+import { getFormattedDate } from "@/utils/date";
+
 const COLORS = {
   primary: "#064E3B", accent: "#10B981", background: "#F8FAFB", white: "#FFFFFF",
   textMain: "#1A202C", textMuted: "#718096", border: "#EDF2F7", tagBg: "#F1F5F9",
 };
 
 export default function HomeScreen() {
+  const currentDate = getFormattedDate();
+
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
@@ -20,7 +24,7 @@ export default function HomeScreen() {
               <Text style={styles.greetingText}>Olá, Dário</Text>
               <View style={styles.dateRow}>
                 <Calendar size={14} color={COLORS.textMuted} />
-                <Text style={styles.dateText}>Segunda, 12 de Junho</Text>
+                <Text style={styles.dateText}>{currentDate}</Text>
               </View>
             </View>
           </View>
