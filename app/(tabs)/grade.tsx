@@ -1,6 +1,9 @@
+// app/(tabs)/grade.tsx (Substitua o conteúdo ou adicione o Header)
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { Plus, BookOpen } from 'lucide-react-native';
+import { useRouter } from 'expo-router'; // Importe o router
 
 const COLORS = {
   primary: "#064E3B", background: "#F8FAFB", white: "#FFFFFF",
@@ -8,44 +11,35 @@ const COLORS = {
 };
 
 export default function GradeScreen() {
+  const router = useRouter(); // Inicializa o router
+
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
         <SafeAreaView edges={["top"]} style={styles.safeHeader}>
           <View style={styles.header}>
-            <Text style={styles.title}>Grade Horária</Text>
-            <Text style={styles.subtitle}>Semestre 2026.1</Text>
+            <View>
+              <Text style={styles.title}>Minha Grade</Text>
+              <Text style={styles.subtitle}>Gerencie suas disciplinas</Text>
+            </View>
+            
+            {/* BOTÃO PARA ADICIONAR */}
+            <TouchableOpacity 
+              style={styles.addButton} 
+              onPress={() => router.push('/search-subjects')} // Navega para a busca
+            >
+              <Plus size={24} color={COLORS.white} strokeWidth={2.5} />
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          
-          <View style={styles.daySection}>
-            <Text style={styles.dayTitle}>Segunda-feira</Text>
-            
-            <View style={styles.scheduleCard}>
-              <View style={styles.timeTag}>
-                <Text style={styles.timeStart}>08:00</Text>
-                <Text style={styles.timeEnd}>09:40</Text>
-              </View>
-              <View style={styles.cardInfo}>
-                <Text style={styles.subjectText}>Desenvolvimento Web II</Text>
-                <Text style={styles.profText}>Anderson Silva • Lab 4</Text>
-              </View>
-            </View>
-
-            <View style={styles.scheduleCard}>
-              <View style={styles.timeTag}>
-                <Text style={styles.timeStart}>10:00</Text>
-                <Text style={styles.timeEnd}>11:40</Text>
-              </View>
-              <View style={styles.cardInfo}>
-                <Text style={styles.subjectText}>Estrutura de Dados</Text>
-                <Text style={styles.profText}>Maria Oliveira • Lab 2</Text>
-              </View>
-            </View>
+          {/* Aqui ficaria a lista de disciplinas já adicionadas */}
+          <View style={styles.emptyState}>
+            <BookOpen size={48} color={COLORS.border} />
+            <Text style={styles.emptyText}>Nenhuma disciplina adicionada ainda.</Text>
+            <Text style={styles.emptySubText}>Clique no + para montar sua grade.</Text>
           </View>
-
         </ScrollView>
       </View>
     </SafeAreaProvider>
@@ -55,19 +49,30 @@ export default function GradeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: COLORS.background },
   safeHeader: { backgroundColor: COLORS.background },
-  header: { paddingHorizontal: 24, paddingVertical: 10, marginBottom: 20 },
-  title: { fontSize: 28, fontWeight: "800", color: COLORS.textMain, letterSpacing: -0.5 },
-  subtitle: { fontSize: 15, color: COLORS.textMuted, marginTop: 4 },
-  scrollContent: { paddingHorizontal: 24, paddingBottom: 140 },
-  
-  daySection: { marginBottom: 30 },
-  dayTitle: { fontSize: 18, fontWeight: '800', color: COLORS.primary, marginBottom: 16 },
-  
-  scheduleCard: { backgroundColor: COLORS.white, borderRadius: 24, padding: 18, flexDirection: "row", alignItems: "center", marginBottom: 12, borderWidth: 1, borderColor: COLORS.border },
-  timeTag: { alignItems: "center", paddingRight: 18, borderRightWidth: 1, borderRightColor: COLORS.border, width: 65 },
-  timeStart: { fontSize: 15, fontWeight: "800", color: COLORS.textMain },
-  timeEnd: { fontSize: 11, color: COLORS.textMuted, fontWeight: "700" },
-  cardInfo: { flex: 1, paddingLeft: 18 },
-  subjectText: { fontSize: 16, fontWeight: "700", color: COLORS.textMain, marginBottom: 2 },
-  profText: { fontSize: 13, color: COLORS.textMuted, fontWeight: "500" },
+  header: { 
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    paddingHorizontal: 24, 
+    paddingVertical: 10 
+  },
+  title: { fontSize: 28, fontWeight: "800", color: COLORS.textMain },
+  subtitle: { fontSize: 15, color: COLORS.textMuted },
+  addButton: {
+    backgroundColor: COLORS.primary,
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    elevation: 4,
+    shadowColor: COLORS.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+  },
+  scrollContent: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 140 },
+  emptyState: { alignItems: 'center', marginTop: 100 },
+  emptyText: { fontSize: 16, fontWeight: '700', color: COLORS.textMuted, marginTop: 16 },
+  emptySubText: { fontSize: 14, color: COLORS.textMuted, marginTop: 4 },
 });
