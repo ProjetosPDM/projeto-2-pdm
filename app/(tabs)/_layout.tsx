@@ -1,12 +1,14 @@
 import { Tabs } from "expo-router";
-import { View, StyleSheet, Platform } from "react-native";
+import { View, StyleSheet, Platform, Dimensions } from "react-native";
 import { LayoutGrid, BookOpen, User } from "lucide-react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context"; 
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const { width } = Dimensions.get("window");
 
 const COLORS = {
   primary: "#064E3B",
   textMuted: "#718096",
-  softGreen: "#F0FDF4",
+  softGreen: "#E8FFEF",
   white: "#FFFFFF",
 };
 
@@ -20,12 +22,11 @@ export default function TabLayout() {
         tabBarShowLabel: true,
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarStyle:[
+        tabBarStyle: [
           styles.navBar,
           {
-             
-            bottom: Math.max(insets.bottom + 15, 20),
-          }
+            bottom: Math.max(insets.bottom, 20),
+          },
         ],
         tabBarLabelStyle: styles.navLabel,
         tabBarItemStyle: styles.navItem,
@@ -36,8 +37,17 @@ export default function TabLayout() {
         options={{
           title: "Início",
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.pillIndicator, focused && { backgroundColor: COLORS.softGreen }]}>
-              <LayoutGrid size={22} color={color} strokeWidth={focused ? 2.5 : 1.5} />
+            <View
+              style={[
+                styles.pillIndicator,
+                focused && { backgroundColor: COLORS.softGreen },
+              ]}
+            >
+              <LayoutGrid
+                size={24}
+                color={color}
+                strokeWidth={focused ? 2.5 : 1.5}
+              />
             </View>
           ),
         }}
@@ -47,8 +57,17 @@ export default function TabLayout() {
         options={{
           title: "Grade",
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.pillIndicator, focused && { backgroundColor: COLORS.softGreen }]}>
-              <BookOpen size={22} color={color} strokeWidth={focused ? 2.5 : 1.5} />
+            <View
+              style={[
+                styles.pillIndicator,
+                focused && { backgroundColor: COLORS.softGreen },
+              ]}
+            >
+              <BookOpen
+                size={24}
+                color={color}
+                strokeWidth={focused ? 2.5 : 1.5}
+              />
             </View>
           ),
         }}
@@ -58,8 +77,13 @@ export default function TabLayout() {
         options={{
           title: "Perfil",
           tabBarIcon: ({ color, focused }) => (
-            <View style={[styles.pillIndicator, focused && { backgroundColor: COLORS.softGreen }]}>
-              <User size={22} color={color} strokeWidth={focused ? 2.5 : 1.5} />
+            <View
+              style={[
+                styles.pillIndicator,
+                focused && { backgroundColor: COLORS.softGreen },
+              ]}
+            >
+              <User size={24} color={color} strokeWidth={focused ? 2.5 : 1.5} />
             </View>
           ),
         }}
@@ -71,34 +95,39 @@ export default function TabLayout() {
 const styles = StyleSheet.create({
   navBar: {
     position: "absolute",
-    left: 20,
-    right: 20,
-    height: 70, 
+    alignSelf: "center",
+    marginHorizontal: 24,
+    left: width * 0.06,
+    right: width * 0.06,
+    height: 75,
     backgroundColor: COLORS.white,
     borderRadius: 35,
-    elevation: 10,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
     borderTopWidth: 0,
-    paddingTop: Platform.OS === 'ios' ? 10 : 0, 
-    paddingBottom: Platform.OS === 'ios' ? 10 : 0, 
+    elevation: 15,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    paddingBottom: Platform.OS === "ios" ? 0 : 12,
+    paddingTop: 12,
   },
   navItem: {
+    height: 60,
     justifyContent: "center",
     alignItems: "center",
-    paddingTop: 5,
   },
   pillIndicator: {
     paddingHorizontal: 20,
-    paddingVertical: 5,
-    borderRadius: 20,
-    marginBottom: 2, 
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginBottom: 4,
+    justifyContent: "center",
+    alignItems: "center",
   },
   navLabel: {
-    fontSize: 11,
-    fontWeight: "700",
-    marginBottom: 5, 
+    fontSize: 10,
+    fontWeight: "800",
+    marginTop: -2,
+    marginBottom: 4,
   },
 });
