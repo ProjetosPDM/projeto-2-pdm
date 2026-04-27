@@ -1,9 +1,8 @@
-// app/(tabs)/grade.tsx (Substitua o conteúdo ou adicione o Header)
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Plus, BookOpen } from 'lucide-react-native';
-import { useRouter } from 'expo-router'; // Importe o router
+import { useRouter } from 'expo-router'; 
 
 const COLORS = {
   primary: "#064E3B", background: "#F8FAFB", white: "#FFFFFF",
@@ -11,7 +10,7 @@ const COLORS = {
 };
 
 export default function GradeScreen() {
-  const router = useRouter(); // Inicializa o router
+  const router = useRouter(); 
 
   return (
     <SafeAreaProvider>
@@ -23,10 +22,9 @@ export default function GradeScreen() {
               <Text style={styles.subtitle}>Gerencie suas disciplinas</Text>
             </View>
             
-            {/* BOTÃO PARA ADICIONAR */}
             <TouchableOpacity 
               style={styles.addButton} 
-              onPress={() => router.push('/search-subjects')} // Navega para a busca
+              onPress={() => router.push('/search-subjects')} 
             >
               <Plus size={24} color={COLORS.white} strokeWidth={2.5} />
             </TouchableOpacity>
@@ -34,7 +32,6 @@ export default function GradeScreen() {
         </SafeAreaView>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {/* Aqui ficaria a lista de disciplinas já adicionadas */}
           <View style={styles.emptyState}>
             <BookOpen size={48} color={COLORS.border} />
             <Text style={styles.emptyText}>Nenhuma disciplina adicionada ainda.</Text>

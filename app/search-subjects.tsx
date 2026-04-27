@@ -1,4 +1,3 @@
-// app/search-subjects.tsx
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -7,10 +6,9 @@ import { useRouter } from 'expo-router';
 
 const COLORS = {
   primary: "#064E3B", background: "#F8FAFB", white: "#FFFFFF",
-  textMain: "#1A202C", textMuted: "#718096", border: "#EDF2F7", accent: "#10B981"
+  textMain: "#1A202C", textMuted: "#718096", border: "#EDF2F7", accent: "#10B981", softGreen: "#F0FDF4"
 };
 
-// MOCK de dados (Isso virá do Admin/Banco depois)
 const ALL_SUBJECTS = [
   { id: '1', name: 'Programação de Dispositivos Móveis', prof: 'Luiz Onofre', schedule: 'Seg 08:00' },
   { id: '2', name: 'Banco de Dados I', prof: 'Fabio Gomes', schedule: 'Ter 10:00' },
@@ -24,7 +22,6 @@ export default function SearchSubjects() {
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
-  // Filtra as disciplinas com base no que o aluno digita
   const filteredSubjects = ALL_SUBJECTS.filter(s => 
     s.name.toLowerCase().includes(searchText.toLowerCase())
   );
@@ -46,7 +43,6 @@ export default function SearchSubjects() {
         <Text style={styles.title}>Selecionar Disciplinas</Text>
       </View>
 
-      {/* BARRA DE PESQUISA */}
       <View style={styles.searchContainer}>
         <Search size={20} color={COLORS.textMuted} style={styles.searchIcon} />
         <TextInput
@@ -87,12 +83,11 @@ export default function SearchSubjects() {
         }}
       />
 
-      {/* BOTÃO DE CONFIRMAR */}
       {selectedIds.length > 0 && (
         <View style={styles.footer}>
           <TouchableOpacity 
             style={styles.confirmButton}
-            onPress={() => router.back()} // No futuro, isso salva no SQLite
+            onPress={() => router.back()} 
           >
             <Text style={styles.confirmText}>Adicionar {selectedIds.length} Disciplinas</Text>
           </TouchableOpacity>
