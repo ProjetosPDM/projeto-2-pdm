@@ -25,7 +25,7 @@ export default function TabLayout() {
         tabBarStyle: [
           styles.navBar,
           {
-            bottom: Math.max(insets.bottom, 20),
+            bottom: Math.max(insets.bottom + 8, 28),
           },
         ],
         tabBarLabelStyle: styles.navLabel,
