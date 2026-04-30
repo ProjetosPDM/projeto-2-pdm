@@ -1,5 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert, StatusBar } from 'react-native';
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  TouchableOpacity, 
+  TextInput, 
+  Alert, 
+  StatusBar, 
+  BackHandler, 
+  Platform 
+} from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Settings, 
@@ -13,7 +23,6 @@ import {
 } from 'lucide-react-native';
 
 import { useSubjects } from '../../context/SubjectContext';
-// Importação do hook de tema atualizado com suporte a troca manual
 import { useTheme } from '../../context/ThemeContext';
 
 export default function PerfilScreen() {
@@ -34,24 +43,34 @@ export default function PerfilScreen() {
     setEstaEditando(false);
   };
 
-  // Função para abrir o seletor de tema
+  // Função para fechar o app (Nativa Android)
+  const handleSair = () => {
+    if (Platform.OS === 'android') {
+      Alert.alert(
+        "Sair",
+        "Deseja realmente fechar o aplicativo?",
+        [
+          { text: "Não", style: "cancel" },
+          { 
+            text: "Sim", 
+            onPress: () => BackHandler.exitApp() 
+          }
+        ]
+      );
+    } else {
+      // Aviso específico para iOS onde o sistema não permite fechar via código
+      Alert.alert("Aviso", "No iOS, você deve fechar o aplicativo deslizando para cima.");
+    }
+  };
+
   const alterarAparencia = () => {
     Alert.alert(
       "Aparência",
       "Escolha como o aplicativo deve ser exibido:",
       [
-        { 
-          text: "Claro", 
-          onPress: () => setThemeMode('light')
-        },
-        { 
-          text: "Escuro", 
-          onPress: () => setThemeMode('dark')
-        },
-        { 
-          text: "Padrão do Sistema", 
-          onPress: () => setThemeMode('system')
-        },
+        { text: "Claro", onPress: () => setThemeMode('light') },
+        { text: "Escuro", onPress: () => setThemeMode('dark') },
+        { text: "Padrão do Sistema", onPress: () => setThemeMode('system') },
         { text: "Cancelar", style: "cancel" }
       ]
     );
@@ -126,7 +145,6 @@ export default function PerfilScreen() {
               <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* BOTÃO DE CONFIGURAÇÕES / TROCA DE TEMA */}
             <TouchableOpacity 
               style={styles.actionButton} 
               activeOpacity={0.7}
@@ -144,7 +162,12 @@ export default function PerfilScreen() {
               <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
 
-            <TouchableOpacity style={[styles.actionButton, { marginTop: 12 }]} activeOpacity={0.7}>
+            {/* BOTÃO DE SAIR ATUALIZADO */}
+            <TouchableOpacity 
+              style={[styles.actionButton, { marginTop: 12 }]} 
+              activeOpacity={0.7}
+              onPress={handleSair}
+            >
               <View style={[styles.actionIcon, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : colors.dangerLight }]}>
                 <LogOut size={20} color={colors.danger} />
               </View>
