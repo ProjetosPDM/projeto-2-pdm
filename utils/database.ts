@@ -22,7 +22,7 @@ export const inicializarBanco = async () => {
         local TEXT NOT NULL
       );
 
-      -- Tabela para configurações do app (como o nome do aluno)
+      -- Tabela para configurações do app (nome, tema, etc)
       CREATE TABLE IF NOT EXISTS config (
         chave TEXT PRIMARY KEY, 
         valor TEXT
@@ -54,9 +54,10 @@ export const removerDisciplinaDB = async (id: string) => {
 };
 
 /**
- * Funções para Gerenciamento de Configurações (Perfil)
+ * Funções para Gerenciamento de Configurações (Perfil e Tema)
  */
 
+// --- NOME DO USUÁRIO ---
 export const atualizarNomeUsuarioDB = async (nome: string) => {
   try {
     return await db.runAsync(
@@ -74,10 +75,35 @@ export const buscarNomeUsuarioDB = async () => {
       'SELECT valor FROM config WHERE chave = ?', 
       ['nome_usuario']
     );
-    // Retorna o nome salvo ou o padrão caso o banco esteja vazio
-    return resultado ? (resultado as any).valor : "Usuario";
+    return resultado ? (resultado as any).valor : "Usuário";
   } catch (error) {
     console.error("Erro ao buscar nome no banco:", error);
-    return "Usuario";
+    return "Usuário";
+  }
+};
+
+// --- TEMA DO APLICATIVO (NOVO) ---
+export const salvarTemaDB = async (tema: 'light' | 'dark' | 'system') => {
+  try {
+    return await db.runAsync(
+      'INSERT OR REPLACE INTO config (chave, valor) VALUES (?, ?)', 
+      ['tema_app', tema]
+    );
+  } catch (error) {
+    console.error("Erro ao salvar tema no banco:", error);
+  }
+};
+
+export const buscarTemaDB = async () => {
+  try {
+    const resultado = await db.getFirstAsync(
+      'SELECT valor FROM config WHERE chave = ?', 
+      ['tema_app']
+    );
+    // Se não houver nada salvo, o padrão é seguir o sistema do celular
+    return resultado ? (resultado as any).valor : 'system';
+  } catch (error) {
+    console.error("Erro ao buscar tema no banco:", error);
+    return 'system';
   }
 };

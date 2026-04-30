@@ -17,7 +17,9 @@ import {
   BookOpen,
 } from "lucide-react-native";
 
+// Importando os hooks de dados e tema
 import { useSubjects } from "../../context/SubjectContext";
+import { useTheme } from "../../context/ThemeContext";
 import {
   getFormattedDate,
   getToday,
@@ -25,22 +27,12 @@ import {
   calculateProgress,
 } from "@/utils/date";
 
-const COLORS = {
-  primary: "#064E3B",
-  accent: "#10B981",
-  background: "#F8FAFB",
-  white: "#FFFFFF",
-  textMain: "#1A202C",
-  textMuted: "#718096",
-  border: "#EDF2F7",
-  tagBg: "#F1F5F9",
-  softGreen: "#F0FDF4",
-};
-
 export default function HomeScreen() {
   const { mySubjects, userName } = useSubjects();
+  const { colors, isDark } = useTheme(); // Consumindo o tema atual
   const currentDate = getFormattedDate();
 
+  // Lógica para organizar as aulas do dia
   const { aulaAtual, proximasAulas, aulasEncerradas } = useMemo(() => {
     const hoje = getToday();
     const agoraEmMinutos = new Date().getHours() * 60 + new Date().getMinutes();
@@ -64,11 +56,14 @@ export default function HomeScreen() {
     };
   }, [mySubjects]);
 
+  // Geramos os estilos passando as cores do tema
+  const styles = createStyles(colors, isDark);
+
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
         <StatusBar
-          barStyle="dark-content"
+          barStyle={isDark ? "light-content" : "dark-content"}
           translucent
           backgroundColor="transparent"
         />
@@ -76,9 +71,9 @@ export default function HomeScreen() {
         <SafeAreaView edges={["top"]} style={styles.safeHeader}>
           <View style={styles.header}>
             <View>
-             <Text style={styles.greetingText}>Olá, {userName}</Text>
+              <Text style={styles.greetingText}>Olá, {userName}</Text>
               <View style={styles.dateRow}>
-                <Calendar size={14} color={COLORS.textMuted} />
+                <Calendar size={14} color={colors.textMuted} />
                 <Text style={styles.dateText}>{currentDate}</Text>
               </View>
             </View>
@@ -89,11 +84,12 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
+          {/* SEÇÃO: AULA AGORA */}
           {aulaAtual ? (
             <View style={styles.featuredSection}>
               <View style={styles.liveBadge}>
                 <View style={styles.pulseDot} />
-                <Text style={styles.liveText}>AULA AGORA</Text>
+                <Text style={[styles.liveText, { color: colors.accent }]}>AULA AGORA</Text>
               </View>
 
               <View style={styles.mainCard}>
@@ -112,6 +108,7 @@ export default function HomeScreen() {
                       style={[
                         styles.progressFill,
                         {
+                          backgroundColor: colors.accent,
                           width: `${calculateProgress(
                             aulaAtual.timeStart,
                             aulaAtual.timeEnd
@@ -138,13 +135,15 @@ export default function HomeScreen() {
             </View>
           ) : null}
 
+          {/* ESTADO VAZIO */}
           {mySubjects.filter((s) => s.schedule === getToday()).length === 0 && (
             <View style={styles.noClassesToday}>
-              <BookOpen size={40} color={COLORS.border} />
+              <BookOpen size={40} color={colors.border} />
               <Text style={styles.noClassesText}>Sem aulas para hoje.</Text>
             </View>
           )}
 
+          {/* SEÇÃO: PRÓXIMAS DO DIA */}
           {proximasAulas.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
@@ -174,7 +173,7 @@ export default function HomeScreen() {
                   </View>
                   <ChevronRight
                     size={18}
-                    color={COLORS.textMuted}
+                    color={colors.textMuted}
                     strokeWidth={1.5}
                   />
                 </TouchableOpacity>
@@ -182,6 +181,7 @@ export default function HomeScreen() {
             </>
           )}
 
+          {/* SEÇÃO: ENCERRADAS */}
           {aulasEncerradas.length > 0 && (
             <>
               <Text
@@ -192,7 +192,7 @@ export default function HomeScreen() {
 
               {aulasEncerradas.map((aula) => (
                 <View key={aula.id} style={styles.pastCard}>
-                  <CheckCircle2 size={20} color={COLORS.accent} />
+                  <CheckCircle2 size={20} color={colors.accent} />
                   <View style={styles.pastInfo}>
                     <Text style={styles.pastTitle}>{aula.name}</Text>
                     <Text style={styles.pastSub}>
@@ -209,18 +209,19 @@ export default function HomeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  safeHeader: { backgroundColor: COLORS.background },
+// Funções de estilos dinâmicos
+const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  safeHeader: { backgroundColor: colors.background },
   header: { paddingHorizontal: 24, paddingVertical: 10 },
   greetingText: {
     fontSize: 28,
     fontWeight: "800",
-    color: COLORS.textMain,
+    color: colors.textMain,
     letterSpacing: -0.5,
   },
   dateRow: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 6 },
-  dateText: { fontSize: 13, color: COLORS.textMuted, fontWeight: "600" },
+  dateText: { fontSize: 13, color: colors.textMuted, fontWeight: "600" },
   scrollContent: { paddingHorizontal: 24, paddingTop: 10, paddingBottom: 140 },
   featuredSection: { marginBottom: 35 },
   liveBadge: {
@@ -233,28 +234,27 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.accent,
+    backgroundColor: colors.accent,
   },
   liveText: {
     fontSize: 11,
     fontWeight: "900",
-    color: COLORS.accent,
     letterSpacing: 1,
   },
   mainCard: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     borderRadius: 30,
     padding: 26,
-    shadowColor: COLORS.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.22,
+    shadowOpacity: isDark ? 0.4 : 0.22,
     shadowRadius: 18,
     elevation: 8,
   },
   mainSubject: {
     fontSize: 22,
     fontWeight: "800",
-    color: COLORS.white,
+    color: "#FFFFFF",
     marginBottom: 4,
   },
   mainProfessor: {
@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.4)",
     fontWeight: "700",
   },
-  progressPercent: { fontSize: 11, color: COLORS.white, fontWeight: "800" },
+  progressPercent: { fontSize: 11, color: "#FFFFFF", fontWeight: "800" },
   progressTrack: {
     height: 6,
     backgroundColor: "rgba(255,255,255,0.1)",
@@ -282,7 +282,6 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: "100%",
-    backgroundColor: COLORS.accent,
     borderRadius: 3,
   },
   mainFooter: {
@@ -293,68 +292,68 @@ const styles = StyleSheet.create({
     paddingTop: 18,
   },
   footerItem: { flexDirection: "row", alignItems: "center", gap: 6 },
-  footerValue: { color: COLORS.white, fontSize: 13, fontWeight: "600" },
+  footerValue: { color: "#FFFFFF", fontSize: 13, fontWeight: "600" },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
   },
-  sectionTitle: { fontSize: 18, fontWeight: "800", color: COLORS.textMain },
+  sectionTitle: { fontSize: 18, fontWeight: "800", color: colors.textMain },
   countBadge: {
-    backgroundColor: COLORS.tagBg,
+    backgroundColor: colors.border,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
   },
-  countText: { fontSize: 11, fontWeight: "800", color: COLORS.textMuted },
+  countText: { fontSize: 11, fontWeight: "800", color: colors.textMuted },
   scheduleCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: colors.card,
     borderRadius: 24,
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   timeTag: {
     alignItems: "center",
     paddingRight: 18,
     borderRightWidth: 1,
-    borderRightColor: COLORS.border,
+    borderRightColor: colors.border,
     width: 65,
   },
-  timeStart: { fontSize: 15, fontWeight: "800", color: COLORS.textMain },
-  timeEnd: { fontSize: 11, color: COLORS.textMuted, fontWeight: "700" },
+  timeStart: { fontSize: 15, fontWeight: "800", color: colors.textMain },
+  timeEnd: { fontSize: 11, color: colors.textMuted, fontWeight: "700" },
   cardInfo: { flex: 1, paddingLeft: 18 },
   subjectText: {
     fontSize: 16,
     fontWeight: "700",
-    color: COLORS.textMain,
+    color: colors.textMain,
     marginBottom: 2,
   },
-  profText: { fontSize: 13, color: COLORS.textMuted, fontWeight: "500" },
+  profText: { fontSize: 13, color: colors.textMuted, fontWeight: "500" },
   pastCard: {
     flexDirection: "row",
     alignItems: "center",
     padding: 18,
-    backgroundColor: "rgba(226, 232, 240, 0.3)",
+    backgroundColor: isDark ? 'rgba(255,255,255,0.02)' : 'rgba(226, 232, 240, 0.3)',
     borderRadius: 20,
     gap: 15,
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
     borderStyle: "dashed",
     marginBottom: 12,
   },
   pastInfo: { flex: 1 },
-  pastTitle: { fontSize: 15, fontWeight: "700", color: COLORS.textMuted },
-  pastSub: { fontSize: 13, color: COLORS.textMuted },
+  pastTitle: { fontSize: 15, fontWeight: "700", color: colors.textMuted },
+  pastSub: { fontSize: 13, color: colors.textMuted },
   noClassesToday: {
     alignItems: "center",
     justifyContent: "center",
     marginTop: 40,
     gap: 10,
   },
-  noClassesText: { color: COLORS.textMuted, fontWeight: "600" },
+  noClassesText: { color: colors.textMuted, fontWeight: "600" },
 });

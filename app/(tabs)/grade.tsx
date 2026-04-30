@@ -5,29 +5,21 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Alert, // Adicionado para confirmação
+  Alert,
+  StatusBar,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { Plus, BookOpen, Clock, Trash2 } from "lucide-react-native"; // Trash2 adicionado
+import { Plus, BookOpen, Clock, Trash2 } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
 import { EmptyState } from "@/components/EmptyState";
 import { useSubjects } from "../../context/SubjectContext";
-
-const COLORS = {
-  primary: "#064E3B",
-  background: "#F8FAFB",
-  white: "#FFFFFF",
-  textMain: "#1A202C",
-  textMuted: "#718096",
-  border: "#EDF2F7",
-  accent: "#10B981",
-  danger: "#EF4444", // Cor vermelha para remoção
-};
+// Importação do hook de tema
+import { useTheme } from "../../context/ThemeContext";
 
 export default function GradeScreen() {
   const router = useRouter();
-  // Pegando a função de remover do contexto
+  const { colors, isDark } = useTheme(); // Consumindo o tema
   const { mySubjects, removeSubject } = useSubjects();
 
   // Função para confirmar a exclusão
@@ -46,9 +38,15 @@ export default function GradeScreen() {
     );
   };
 
+  // Geramos os estilos baseados no tema atual
+  const styles = createStyles(colors);
+
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
+        {/* Ajusta a barra de status conforme o tema */}
+        <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
         <SafeAreaView edges={["top"]} style={styles.safeHeader}>
           <View style={styles.header}>
             <View>
@@ -60,7 +58,7 @@ export default function GradeScreen() {
               style={styles.addButton}
               onPress={() => router.push("/search-subjects")}
             >
-              <Plus size={24} color={COLORS.white} strokeWidth={2.5} />
+              <Plus size={24} color="#FFFFFF" strokeWidth={2.5} />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -102,20 +100,19 @@ export default function GradeScreen() {
                     <View style={styles.dayTag}>
                       <Clock
                         size={12}
-                        color={COLORS.accent}
+                        color={colors.accent}
                         style={{ marginRight: 4 }}
                       />
                       <Text style={styles.dayText}>{item.schedule}</Text>
                     </View>
                   </View>
 
-                  {/* BOTÃO DE REMOVER */}
                   <TouchableOpacity
                     style={styles.deleteButton}
                     onPress={() => confirmarRemocao(item.id, item.name)}
                     activeOpacity={0.6}
                   >
-                    <Trash2 size={20} color={COLORS.danger} strokeWidth={2} />
+                    <Trash2 size={20} color={colors.danger} strokeWidth={2} />
                   </TouchableOpacity>
                 </View>
               ))}
@@ -127,9 +124,10 @@ export default function GradeScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: COLORS.background },
-  safeHeader: { backgroundColor: COLORS.background },
+// Estilos dinâmicos que recebem as cores do tema
+const createStyles = (colors: any) => StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
+  safeHeader: { backgroundColor: colors.background },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -137,17 +135,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 10,
   },
-  title: { fontSize: 28, fontWeight: "800", color: COLORS.textMain },
-  subtitle: { fontSize: 15, color: COLORS.textMuted },
+  title: { fontSize: 28, fontWeight: "800", color: colors.textMain },
+  subtitle: { fontSize: 15, color: colors.textMuted },
   addButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     width: 48,
     height: 48,
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     elevation: 4,
-    shadowColor: COLORS.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -162,29 +160,29 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   scheduleCard: {
-    backgroundColor: COLORS.white,
+    backgroundColor: colors.card,
     borderRadius: 24,
     padding: 18,
     flexDirection: "row",
     alignItems: "center",
     borderWidth: 1,
-    borderColor: COLORS.border,
+    borderColor: colors.border,
   },
   timeTag: {
     alignItems: "center",
     paddingRight: 18,
     borderRightWidth: 1,
-    borderRightColor: COLORS.border,
+    borderRightColor: colors.border,
     width: 65,
   },
   timeStart: {
     fontSize: 15,
     fontWeight: "800",
-    color: COLORS.textMain,
+    color: colors.textMain,
   },
   timeEnd: {
     fontSize: 11,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontWeight: "700",
   },
   cardInfo: {
@@ -194,7 +192,7 @@ const styles = StyleSheet.create({
   subjectText: {
     fontSize: 16,
     fontWeight: "700",
-    color: COLORS.textMain,
+    color: colors.textMain,
     marginBottom: 4,
   },
   detailsRow: {
@@ -204,25 +202,25 @@ const styles = StyleSheet.create({
   },
   profText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontWeight: "500",
   },
   dot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: COLORS.textMuted,
+    backgroundColor: colors.textMuted,
     marginHorizontal: 6,
   },
   locationText: {
     fontSize: 13,
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     fontWeight: "500",
   },
   dayTag: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F0FDF4",
+    backgroundColor: colors.softGreen,
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
@@ -230,7 +228,7 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 11,
-    color: COLORS.accent,
+    color: colors.accent,
     fontWeight: "700",
   },
   deleteButton: {

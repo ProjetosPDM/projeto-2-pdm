@@ -1,0 +1,29 @@
+// constants/Colors.ts
+export const ThemeColors = {
+  light: {
+    primary: "#064E3B",
+    accent: "#10B981",
+    background: "#F8FAFB",
+    card: "#FFFFFF",
+    textMain: "#1A202C",
+    textMuted: "#718096",
+    border: "#EDF2F7",
+    softGreen: "#F0FDF4",
+    danger: "#EF4444",
+    tabBar: "#FFFFFF",
+    dangerLight: "#FEF2F2",
+  },
+  dark: {
+    primary: "#10B981", // Invertemos um pouco para o verde brilhar no escuro
+    accent: "#34D399",
+    background: "#0F172A", // Azul muito escuro (estilo GitHub/Vercel)
+    card: "#1E293B",
+    textMain: "#F8FAFB",
+    textMuted: "#94A3B8",
+    border: "#334155",
+    softGreen: "rgba(16, 185, 129, 0.1)",
+    danger: "#F87171",
+    tabBar: "#1E293B",
+    dangerLight: "rgba(248, 113, 113, 0.1)",
+  }
+};

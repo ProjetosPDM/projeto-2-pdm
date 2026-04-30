@@ -3,32 +3,32 @@ import { View, StyleSheet, Platform, Dimensions } from "react-native";
 import { LayoutGrid, BookOpen, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const { width } = Dimensions.get("window");
+// Importação do hook de tema
+import { useTheme } from "../../context/ThemeContext";
 
-const COLORS = {
-  primary: "#064E3B",
-  textMuted: "#718096",
-  softGreen: "#E8FFEF",
-  white: "#FFFFFF",
-};
+const { width } = Dimensions.get("window");
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
+  const { colors, isDark } = useTheme(); // Consumindo o tema atual
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textMuted,
+        tabBarActiveTintColor: colors.primary, // Cor dinâmica
+        tabBarInactiveTintColor: colors.textMuted, // Cor dinâmica
         tabBarStyle: [
           styles.navBar,
           {
+            backgroundColor: colors.card, // Fundo da barra muda com o tema
+            borderColor: colors.border,
+            borderTopWidth: isDark ? 1 : 0, // Adiciona uma borda sutil no dark mode
             bottom: Math.max(insets.bottom + 8, 28),
           },
         ],
-        tabBarLabelStyle: styles.navLabel,
+        tabBarLabelStyle: [styles.navLabel, { color: colors.textMuted }],
         tabBarItemStyle: styles.navItem,
       }}
     >
@@ -40,12 +40,12 @@ export default function TabLayout() {
             <View
               style={[
                 styles.pillIndicator,
-                focused && { backgroundColor: COLORS.softGreen },
+                focused && { backgroundColor: colors.softGreen },
               ]}
             >
               <LayoutGrid
                 size={24}
-                color={color}
+                color={focused ? colors.primary : color}
                 strokeWidth={focused ? 2.5 : 1.5}
               />
             </View>
@@ -60,12 +60,12 @@ export default function TabLayout() {
             <View
               style={[
                 styles.pillIndicator,
-                focused && { backgroundColor: COLORS.softGreen },
+                focused && { backgroundColor: colors.softGreen },
               ]}
             >
               <BookOpen
                 size={24}
-                color={color}
+                color={focused ? colors.primary : color}
                 strokeWidth={focused ? 2.5 : 1.5}
               />
             </View>
@@ -80,10 +80,14 @@ export default function TabLayout() {
             <View
               style={[
                 styles.pillIndicator,
-                focused && { backgroundColor: COLORS.softGreen },
+                focused && { backgroundColor: colors.softGreen },
               ]}
             >
-              <User size={24} color={color} strokeWidth={focused ? 2.5 : 1.5} />
+              <User 
+                size={24} 
+                color={focused ? colors.primary : color} 
+                strokeWidth={focused ? 2.5 : 1.5} 
+              />
             </View>
           ),
         }}
@@ -100,9 +104,7 @@ const styles = StyleSheet.create({
     left: width * 0.06,
     right: width * 0.06,
     height: 75,
-    backgroundColor: COLORS.white,
     borderRadius: 35,
-    borderTopWidth: 0,
     elevation: 15,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
