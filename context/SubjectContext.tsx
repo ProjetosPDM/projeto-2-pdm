@@ -1,10 +1,11 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-// Importação das funções do utilitário de banco de dados
 import { 
   inicializarBanco, 
   buscarDisciplinasDB, 
   salvarDisciplinaDB, 
-  removerDisciplinaDB 
+  removerDisciplinaDB,
+  buscarNomeUsuarioDB, // Nova função
+  atualizarNomeUsuarioDB // Nova função
 } from '../utils/database';
 
 export interface Subject {
@@ -19,25 +20,25 @@ export interface Subject {
 
 interface SubjectContextData {
   mySubjects: Subject[];
-  addSubjects: (subjects: Subject[]) => Promise<void>; // Mudou para Promise pois é async
-  removeSubject: (id: string) => Promise<void>;       // Mudou para Promise pois é async
+  userName: string; // Adicionado
+  addSubjects: (subjects: Subject[]) => Promise<void>;
+  removeSubject: (id: string) => Promise<void>;
+  updateUserName: (name: string) => Promise<void>; // Adicionado
 }
 
 const SubjectContext = createContext<SubjectContextData>({} as SubjectContextData);
 
 export const SubjectProvider = ({ children }: { children: ReactNode }) => {
   const [mySubjects, setMySubjects] = useState<Subject[]>([]);
+  const [userName, setUserName] = useState<string>("Estudante"); // Estado do nome
 
-  // 1. Carregamento Inicial: Roda assim que o App abre
+  // 1. Carregamento Inicial
   useEffect(() => {
     const carregarDadosIniciais = async () => {
-      // Garante que a tabela existe
       await inicializarBanco();
       
-      // Busca o que já está salvo no SQLite
+      // Busca Disciplinas
       const dadosDoBanco = await buscarDisciplinasDB();
-      
-      // Mapeia os dados do banco para o formato da interface Subject
       const formatados = (dadosDoBanco as any[]).map(d => ({
         id: d.id,
         name: d.nome,
@@ -47,23 +48,22 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         timeEnd: d.horaFim,
         location: d.local
       }));
-
       setMySubjects(formatados);
-      console.log("Grade carregada do SQLite:", formatados.length, "disciplinas.");
+
+      // Busca Nome do Usuário salvo no SQLite
+      const nomeSalvo = await buscarNomeUsuarioDB();
+      if (nomeSalvo) setUserName(nomeSalvo);
     };
 
     carregarDadosIniciais();
   }, []);
 
-  // 2. Adicionar Disciplinas (Salva no Banco + Memória)
+  // 2. Adicionar Disciplinas
   const addSubjects = async (newSubjects: Subject[]) => {
     try {
-      // Salva cada disciplina nova no banco de dados
       for (const subject of newSubjects) {
         await salvarDisciplinaDB(subject);
       }
-
-      // Atualiza o estado da memória para refletir na UI imediatamente
       setMySubjects(prev => {
         const existingIds = new Set(prev.map(s => s.id));
         const filteredNew = newSubjects.filter(s => !existingIds.has(s.id));
@@ -74,21 +74,34 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  // 3. Remover Disciplina (Apaga do Banco + Memória)
+  // 3. Remover Disciplina
   const removeSubject = async (id: string) => {
     try {
-      // Remove do SQLite
       await removerDisciplinaDB(id);
-      
-      // Remove do estado local
       setMySubjects(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error("Erro ao remover do banco:", error);
     }
   };
 
+  // 4. Atualizar Nome do Usuário (Novo)
+  const updateUserName = async (newName: string) => {
+    try {
+      await atualizarNomeUsuarioDB(newName); // Salva no SQLite
+      setUserName(newName); // Atualiza na memória (UI)
+    } catch (error) {
+      console.error("Erro ao atualizar nome:", error);
+    }
+  };
+
   return (
-    <SubjectContext.Provider value={{ mySubjects, addSubjects, removeSubject }}>
+    <SubjectContext.Provider value={{ 
+      mySubjects, 
+      userName, 
+      addSubjects, 
+      removeSubject, 
+      updateUserName 
+    }}>
       {children}
     </SubjectContext.Provider>
   );

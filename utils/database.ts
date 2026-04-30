@@ -1,13 +1,17 @@
 import * as SQLite from 'expo-sqlite';
 
-// Abre ou cria o banco de dados
+// Abre a conexão com o banco de dados
 const db = SQLite.openDatabaseSync('ifpb_horario.db');
 
+/**
+ * Inicializa o banco de dados criando as tabelas necessárias
+ */
 export const inicializarBanco = async () => {
   try {
-    // Cria a tabela de disciplinas se não existir
     await db.execAsync(`
       PRAGMA journal_mode = WAL;
+
+      -- Tabela para armazenar as disciplinas da grade
       CREATE TABLE IF NOT EXISTS disciplinas (
         id TEXT PRIMARY KEY NOT NULL,
         nome TEXT NOT NULL,
@@ -17,12 +21,22 @@ export const inicializarBanco = async () => {
         horaFim TEXT NOT NULL,
         local TEXT NOT NULL
       );
+
+      -- Tabela para configurações do app (como o nome do aluno)
+      CREATE TABLE IF NOT EXISTS config (
+        chave TEXT PRIMARY KEY, 
+        valor TEXT
+      );
     `);
-    console.log("Banco de dados inicializado com sucesso!");
+    console.log("Banco de dados e tabelas inicializados!");
   } catch (error) {
-    console.error("Erro ao inicializar banco:", error);
+    console.error("Erro crítico ao inicializar o banco:", error);
   }
 };
+
+/**
+ * Funções para Gerenciamento de Disciplinas
+ */
 
 export const salvarDisciplinaDB = async (d: any) => {
   return await db.runAsync(
@@ -37,4 +51,33 @@ export const buscarDisciplinasDB = async () => {
 
 export const removerDisciplinaDB = async (id: string) => {
   return await db.runAsync('DELETE FROM disciplinas WHERE id = ?', [id]);
+};
+
+/**
+ * Funções para Gerenciamento de Configurações (Perfil)
+ */
+
+export const atualizarNomeUsuarioDB = async (nome: string) => {
+  try {
+    return await db.runAsync(
+      'INSERT OR REPLACE INTO config (chave, valor) VALUES (?, ?)', 
+      ['nome_usuario', nome]
+    );
+  } catch (error) {
+    console.error("Erro ao salvar nome no banco:", error);
+  }
+};
+
+export const buscarNomeUsuarioDB = async () => {
+  try {
+    const resultado = await db.getFirstAsync(
+      'SELECT valor FROM config WHERE chave = ?', 
+      ['nome_usuario']
+    );
+    // Retorna o nome salvo ou o padrão caso o banco esteja vazio
+    return resultado ? (resultado as any).valor : "Usuario";
+  } catch (error) {
+    console.error("Erro ao buscar nome no banco:", error);
+    return "Usuario";
+  }
 };

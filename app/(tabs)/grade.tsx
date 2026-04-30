@@ -5,13 +5,14 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert, // Adicionado para confirmação
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { Plus, BookOpen, Clock, MapPin } from "lucide-react-native";
+import { Plus, BookOpen, Clock, Trash2 } from "lucide-react-native"; // Trash2 adicionado
 import { useRouter } from "expo-router";
 
 import { EmptyState } from "@/components/EmptyState";
-import { useSubjects } from "../../context/SubjectContext"; 
+import { useSubjects } from "../../context/SubjectContext";
 
 const COLORS = {
   primary: "#064E3B",
@@ -21,11 +22,29 @@ const COLORS = {
   textMuted: "#718096",
   border: "#EDF2F7",
   accent: "#10B981",
+  danger: "#EF4444", // Cor vermelha para remoção
 };
 
 export default function GradeScreen() {
   const router = useRouter();
-  const { mySubjects } = useSubjects();
+  // Pegando a função de remover do contexto
+  const { mySubjects, removeSubject } = useSubjects();
+
+  // Função para confirmar a exclusão
+  const confirmarRemocao = (id: string, nome: string) => {
+    Alert.alert(
+      "Remover Disciplina",
+      `Tem certeza que deseja remover "${nome}" da sua grade?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        { 
+          text: "Remover", 
+          style: "destructive", 
+          onPress: () => removeSubject(id) 
+        },
+      ]
+    );
+  };
 
   return (
     <SafeAreaProvider>
@@ -46,7 +65,7 @@ export default function GradeScreen() {
           </View>
         </SafeAreaView>
 
-        <ScrollView 
+        <ScrollView
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
@@ -68,23 +87,36 @@ export default function GradeScreen() {
                     <Text style={styles.timeStart}>{item.timeStart}</Text>
                     <Text style={styles.timeEnd}>{item.timeEnd}</Text>
                   </View>
-                  
+
                   <View style={styles.cardInfo}>
                     <Text style={styles.subjectText} numberOfLines={1}>
                       {item.name}
                     </Text>
-                    
+
                     <View style={styles.detailsRow}>
                       <Text style={styles.profText}>{item.prof}</Text>
                       <View style={styles.dot} />
                       <Text style={styles.locationText}>{item.location}</Text>
                     </View>
-                    
+
                     <View style={styles.dayTag}>
-                      <Clock size={12} color={COLORS.accent} style={{ marginRight: 4 }} />
+                      <Clock
+                        size={12}
+                        color={COLORS.accent}
+                        style={{ marginRight: 4 }}
+                      />
                       <Text style={styles.dayText}>{item.schedule}</Text>
                     </View>
                   </View>
+
+                  {/* BOTÃO DE REMOVER */}
+                  <TouchableOpacity
+                    style={styles.deleteButton}
+                    onPress={() => confirmarRemocao(item.id, item.name)}
+                    activeOpacity={0.6}
+                  >
+                    <Trash2 size={20} color={COLORS.danger} strokeWidth={2} />
+                  </TouchableOpacity>
                 </View>
               ))}
             </View>
@@ -120,11 +152,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
-  scrollContent: { 
-    flexGrow: 1, 
-    paddingHorizontal: 24, 
-    paddingTop: 20, 
-    paddingBottom: 140 
+  scrollContent: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 140,
   },
   listContainer: {
     gap: 12,
@@ -166,8 +198,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   detailsRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: 8,
   },
   profText: {
@@ -188,17 +220,23 @@ const styles = StyleSheet.create({
     fontWeight: "500",
   },
   dayTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#F0FDF4',
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F0FDF4",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 6,
-    alignSelf: 'flex-start',
+    alignSelf: "flex-start",
   },
   dayText: {
     fontSize: 11,
     color: COLORS.accent,
     fontWeight: "700",
-  }
+  },
+  deleteButton: {
+    padding: 8,
+    marginLeft: 4,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 });

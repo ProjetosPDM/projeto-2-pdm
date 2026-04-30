@@ -38,7 +38,7 @@ const COLORS = {
 };
 
 export default function HomeScreen() {
-  const { mySubjects } = useSubjects();
+  const { mySubjects, userName } = useSubjects();
   const currentDate = getFormattedDate();
 
   const { aulaAtual, proximasAulas, aulasEncerradas } = useMemo(() => {
@@ -76,7 +76,7 @@ export default function HomeScreen() {
         <SafeAreaView edges={["top"]} style={styles.safeHeader}>
           <View style={styles.header}>
             <View>
-              <Text style={styles.greetingText}>Olá, Dário</Text>
+             <Text style={styles.greetingText}>Olá, {userName}</Text>
               <View style={styles.dateRow}>
                 <Calendar size={14} color={COLORS.textMuted} />
                 <Text style={styles.dateText}>{currentDate}</Text>

@@ -1,16 +1,47 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, Alert } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
-import { Settings, RefreshCw, LogOut, CheckCircle2, Clock, ChevronRight } from 'lucide-react-native';
+import { 
+  Settings, 
+  RefreshCw, 
+  LogOut, 
+  CheckCircle2, 
+  Clock, 
+  ChevronRight, 
+  Pencil, 
+  Check 
+} from 'lucide-react-native';
+
+// Importando o contexto para gerenciar o nome real
+import { useSubjects } from '../../context/SubjectContext';
 
 const COLORS = {
   primary: "#064E3B", background: "#F8FAFB", white: "#FFFFFF",
   textMain: "#1A202C", textMuted: "#718096", border: "#EDF2F7",
-  softGreen: "#F0FDF4", danger: "#EF4444", dangerLight: "#FEF2F2"
+  softGreen: "#F0FDF4", danger: "#EF4444", dangerLight: "#FEF2F2",
+  accent: "#10B981"
 };
 
 export default function PerfilScreen() {
+  const { userName, updateUserName } = useSubjects();
+  const [estaEditando, setEstaEditando] = useState(false);
+  const [nomeTemp, setNomeTemp] = useState(userName);
+  
   const isApproved = true; 
+
+  const handleSalvarNome = async () => {
+    if (nomeTemp.trim().length < 3) {
+      Alert.alert("Erro", "O nome deve ter pelo menos 3 caracteres.");
+      return;
+    }
+    await updateUserName(nomeTemp);
+    setEstaEditando(false);
+  };
+
+  const cancelarEdicao = () => {
+    setNomeTemp(userName);
+    setEstaEditando(false);
+  };
 
   return (
     <SafeAreaProvider>
@@ -23,10 +54,42 @@ export default function PerfilScreen() {
 
         <View style={styles.content}>
           <View style={styles.profileCard}>
+            {/* Avatar dinâmico com a primeira letra do nome */}
             <View style={styles.avatar}>
-              <Text style={styles.avatarText}>D</Text>
+              <Text style={styles.avatarText}>
+                {userName.charAt(0).toUpperCase()}
+              </Text>
             </View>
-            <Text style={styles.name}>Dário Silva</Text>
+            
+            {/* Área do Nome Editável */}
+            <View style={styles.nameContainer}>
+              {estaEditando ? (
+                <View style={styles.editRow}>
+                  <TextInput
+                    style={styles.input}
+                    value={nomeTemp}
+                    onChangeText={setNomeTemp}
+                    autoFocus
+                    placeholder="Seu nome"
+                  />
+                  <TouchableOpacity onPress={handleSalvarNome} style={styles.saveBtn}>
+                    <Check size={20} color={COLORS.white} strokeWidth={3} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity 
+                  style={styles.nameRow} 
+                  onPress={() => {
+                    setNomeTemp(userName);
+                    setEstaEditando(true);
+                  }}
+                >
+                  <Text style={styles.name}>{userName}</Text>
+                  <Pencil size={16} color={COLORS.textMuted} />
+                </TouchableOpacity>
+              )}
+            </View>
+
             <Text style={styles.registration}>Matrícula: 2024100123</Text>
             
             <View style={[styles.statusBadge, isApproved ? styles.statusApproved : styles.statusPending]}>
@@ -77,7 +140,15 @@ const styles = StyleSheet.create({
   profileCard: { alignItems: 'center', backgroundColor: COLORS.white, padding: 24, borderRadius: 30, shadowColor: "#000", shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.05, shadowRadius: 15, elevation: 5, marginBottom: 32, borderWidth: 1, borderColor: COLORS.border },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: COLORS.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
   avatarText: { fontSize: 32, fontWeight: '800', color: COLORS.white },
-  name: { fontSize: 22, fontWeight: '800', color: COLORS.textMain, marginBottom: 4 },
+  
+  // Estilos da Edição de Nome
+  nameContainer: { marginBottom: 4, width: '100%', alignItems: 'center' },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  name: { fontSize: 22, fontWeight: '800', color: COLORS.textMain },
+  editRow: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '90%' },
+  input: { flex: 1, fontSize: 20, fontWeight: '700', color: COLORS.textMain, borderBottomWidth: 2, borderBottomColor: COLORS.accent, paddingVertical: 2 },
+  saveBtn: { backgroundColor: COLORS.accent, width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+
   registration: { fontSize: 14, color: COLORS.textMuted, fontWeight: '500', marginBottom: 16 },
   
   statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, gap: 6 },
