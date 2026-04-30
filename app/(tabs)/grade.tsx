@@ -7,10 +7,13 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { Plus, BookOpen } from "lucide-react-native";
+import { Plus, BookOpen, Clock, MapPin } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
+// Importação do componente que o José Arthur fez
 import { EmptyState } from "@/components/EmptyState";
+// Importação do contexto para ler as disciplinas
+import { useSubjects } from "../../context/SubjectContext"; 
 
 const COLORS = {
   primary: "#064E3B",
@@ -19,10 +22,13 @@ const COLORS = {
   textMain: "#1A202C",
   textMuted: "#718096",
   border: "#EDF2F7",
+  accent: "#10B981",
 };
 
 export default function GradeScreen() {
   const router = useRouter();
+  // Lendo as disciplinas do estado global
+  const { mySubjects } = useSubjects();
 
   return (
     <SafeAreaProvider>
@@ -43,14 +49,51 @@ export default function GradeScreen() {
           </View>
         </SafeAreaView>
 
-        <ScrollView contentContainerStyle={{ flexGrow: 1, paddingBottom: 140 }}>
-          <EmptyState
-            icon={BookOpen}
-            title="Nenhuma disciplina adicionada"
-            description="Clique no botão + para montar sua grade."
-            actionLabel="Adicionar disciplina"
-            onActionPressed={() => router.push("/search-subjects")}
-          />
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {mySubjects.length === 0 ? (
+            // Se a lista estiver vazia, mostra o EmptyState do José
+            <View style={{ flex: 1, marginTop: 40 }}>
+              <EmptyState
+                icon={BookOpen}
+                title="Nenhuma disciplina adicionada"
+                description="Clique no botão + para montar sua grade."
+                actionLabel="Adicionar disciplina"
+                onActionPressed={() => router.push("/search-subjects")}
+              />
+            </View>
+          ) : (
+            // Se houver disciplinas, mapeia e mostra os cards
+            <View style={styles.listContainer}>
+              {mySubjects.map((item) => (
+                <View key={item.id} style={styles.scheduleCard}>
+                  <View style={styles.timeTag}>
+                    <Text style={styles.timeStart}>{item.timeStart}</Text>
+                    <Text style={styles.timeEnd}>{item.timeEnd}</Text>
+                  </View>
+                  
+                  <View style={styles.cardInfo}>
+                    <Text style={styles.subjectText} numberOfLines={1}>
+                      {item.name}
+                    </Text>
+                    
+                    <View style={styles.detailsRow}>
+                      <Text style={styles.profText}>{item.prof}</Text>
+                      <View style={styles.dot} />
+                      <Text style={styles.locationText}>{item.location}</Text>
+                    </View>
+                    
+                    <View style={styles.dayTag}>
+                      <Clock size={12} color={COLORS.accent} style={{ marginRight: 4 }} />
+                      <Text style={styles.dayText}>{item.schedule}</Text>
+                    </View>
+                  </View>
+                </View>
+              ))}
+            </View>
+          )}
         </ScrollView>
       </View>
     </SafeAreaProvider>
@@ -82,13 +125,86 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 8,
   },
-  scrollContent: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 140 },
-  emptyState: { alignItems: "center", marginTop: 100 },
-  emptyText: {
+  scrollContent: { 
+    flexGrow: 1, 
+    paddingHorizontal: 24, 
+    paddingTop: 20, 
+    paddingBottom: 140 
+  },
+  listContainer: {
+    gap: 12,
+  },
+  // Estilos do Card de Disciplina
+  scheduleCard: {
+    backgroundColor: COLORS.white,
+    borderRadius: 24,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  timeTag: {
+    alignItems: "center",
+    paddingRight: 18,
+    borderRightWidth: 1,
+    borderRightColor: COLORS.border,
+    width: 65,
+  },
+  timeStart: {
+    fontSize: 15,
+    fontWeight: "800",
+    color: COLORS.textMain,
+  },
+  timeEnd: {
+    fontSize: 11,
+    color: COLORS.textMuted,
+    fontWeight: "700",
+  },
+  cardInfo: {
+    flex: 1,
+    paddingLeft: 18,
+  },
+  subjectText: {
     fontSize: 16,
     fontWeight: "700",
-    color: COLORS.textMuted,
-    marginTop: 16,
+    color: COLORS.textMain,
+    marginBottom: 4,
   },
-  emptySubText: { fontSize: 14, color: COLORS.textMuted, marginTop: 4 },
+  detailsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  profText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: "500",
+  },
+  dot: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
+    backgroundColor: COLORS.textMuted,
+    marginHorizontal: 6,
+  },
+  locationText: {
+    fontSize: 13,
+    color: COLORS.textMuted,
+    fontWeight: "500",
+  },
+  dayTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F0FDF4',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 6,
+    alignSelf: 'flex-start',
+  },
+  dayText: {
+    fontSize: 11,
+    color: COLORS.accent,
+    fontWeight: "700",
+  }
 });

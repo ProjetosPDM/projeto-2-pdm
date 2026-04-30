@@ -3,27 +3,33 @@ import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, X, Check, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+// Importação do contexto em inglês
+import { useSubjects, Subject } from '../context/SubjectContext'; 
 
 const COLORS = {
   primary: "#064E3B", background: "#F8FAFB", white: "#FFFFFF",
   textMain: "#1A202C", textMuted: "#718096", border: "#EDF2F7", accent: "#10B981", softGreen: "#F0FDF4"
 };
 
-const ALL_SUBJECTS = [
-  { id: '1', name: 'Programação de Dispositivos Móveis', prof: 'Luiz Onofre', schedule: 'Seg 08:00' },
-  { id: '2', name: 'Banco de Dados I', prof: 'Fabio Gomes', schedule: 'Ter 10:00' },
-  { id: '3', name: 'Redes de Computadores', prof: 'Gustavo Wagner', schedule: 'Qua 08:00' },
-  { id: '4', name: 'Inteligência Artificial', prof: 'Cândido Egídio', schedule: 'Qui 13:00' },
-  { id: '5', name: 'Sistemas Operacionais', prof: 'Erick de Melo', schedule: 'Sex 10:00' },
+// Mock de dados ajustado para a interface Subject (em inglês)
+const ALL_SUBJECTS: Subject[] = [
+  { id: '1', name: 'Programação de Dispositivos Móveis', prof: 'Luiz Onofre', schedule: 'Segunda-feira', timeStart: '08:00', timeEnd: '09:40', location: 'Lab 4' },
+  { id: '2', name: 'Banco de Dados I', prof: 'Fabio Gomes', schedule: 'Terça-feira', timeStart: '10:00', timeEnd: '11:40', location: 'Lab 2' },
+  { id: '3', name: 'Redes de Computadores', prof: 'Gustavo Wagner', schedule: 'Quarta-feira', timeStart: '08:00', timeEnd: '09:40', location: 'Lab 3' },
+  { id: '4', name: 'Inteligência Artificial', prof: 'Cândido Egídio', schedule: 'Quinta-feira', timeStart: '13:00', timeEnd: '14:40', location: 'Sala 15' },
+  { id: '5', name: 'Sistemas Operacionais', prof: 'Erick de Melo', schedule: 'Sexta-feira', timeStart: '10:00', timeEnd: '11:40', location: 'Lab 1' },
 ];
 
 export default function SearchSubjects() {
   const router = useRouter();
+  const { addSubjects } = useSubjects(); // Usando a função do contexto em inglês
+  
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
   const filteredSubjects = ALL_SUBJECTS.filter(s => 
-    s.name.toLowerCase().includes(searchText.toLowerCase())
+    s.name.toLowerCase().includes(searchText.toLowerCase()) ||
+    s.prof.toLowerCase().includes(searchText.toLowerCase())
   );
 
   const toggleSelect = (id: string) => {
@@ -32,6 +38,13 @@ export default function SearchSubjects() {
     } else {
       setSelectedIds([...selectedIds, id]);
     }
+  };
+
+  // Função para salvar as matérias no contexto
+  const handleConfirm = () => {
+    const subjectsToAdd = ALL_SUBJECTS.filter(s => selectedIds.includes(s.id));
+    addSubjects(subjectsToAdd); // Chama a função addSubjects do contexto
+    router.back();
   };
 
   return (
@@ -73,7 +86,7 @@ export default function SearchSubjects() {
             >
               <View style={styles.info}>
                 <Text style={styles.subjectName}>{item.name}</Text>
-                <Text style={styles.subjectDetails}>{item.prof} • {item.schedule}</Text>
+                <Text style={styles.subjectDetails}>{item.prof} • {item.schedule} {item.timeStart}</Text>
               </View>
               <View style={[styles.checkbox, isSelected && styles.checkboxActive]}>
                 {isSelected && <Check size={16} color={COLORS.white} strokeWidth={3} />}
@@ -87,9 +100,11 @@ export default function SearchSubjects() {
         <View style={styles.footer}>
           <TouchableOpacity 
             style={styles.confirmButton}
-            onPress={() => router.back()} 
+            onPress={handleConfirm} 
           >
-            <Text style={styles.confirmText}>Adicionar {selectedIds.length} Disciplinas</Text>
+            <Text style={styles.confirmText}>
+              Adicionar {selectedIds.length} {selectedIds.length === 1 ? 'Disciplina' : 'Disciplinas'}
+            </Text>
           </TouchableOpacity>
         </View>
       )}
