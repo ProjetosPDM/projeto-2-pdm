@@ -1,5 +1,5 @@
 import { Stack } from 'expo-router';
-import { SubjectProvider } from '../context/SubjectContext'; // Verifique o caminho correto
+import { SubjectProvider } from '../context/SubjectContext'; 
 
 export default function RootLayout() {
   return (

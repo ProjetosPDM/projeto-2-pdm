@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, X, Check, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-// Importação do contexto em inglês
 import { useSubjects, Subject } from '../context/SubjectContext'; 
 
 const COLORS = {
@@ -11,7 +10,6 @@ const COLORS = {
   textMain: "#1A202C", textMuted: "#718096", border: "#EDF2F7", accent: "#10B981", softGreen: "#F0FDF4"
 };
 
-// Mock de dados ajustado para a interface Subject (em inglês)
 const ALL_SUBJECTS: Subject[] = [
   { id: '1', name: 'Programação de Dispositivos Móveis', prof: 'Luiz Onofre', schedule: 'Segunda-feira', timeStart: '08:00', timeEnd: '09:40', location: 'Lab 4' },
   { id: '2', name: 'Banco de Dados I', prof: 'Fabio Gomes', schedule: 'Terça-feira', timeStart: '10:00', timeEnd: '11:40', location: 'Lab 2' },
@@ -22,7 +20,7 @@ const ALL_SUBJECTS: Subject[] = [
 
 export default function SearchSubjects() {
   const router = useRouter();
-  const { addSubjects } = useSubjects(); // Usando a função do contexto em inglês
+  const { addSubjects } = useSubjects(); 
   
   const [searchText, setSearchText] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -40,10 +38,9 @@ export default function SearchSubjects() {
     }
   };
 
-  // Função para salvar as matérias no contexto
   const handleConfirm = () => {
     const subjectsToAdd = ALL_SUBJECTS.filter(s => selectedIds.includes(s.id));
-    addSubjects(subjectsToAdd); // Chama a função addSubjects do contexto
+    addSubjects(subjectsToAdd); 
     router.back();
   };
 

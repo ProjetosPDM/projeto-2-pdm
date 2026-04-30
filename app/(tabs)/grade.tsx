@@ -10,9 +10,7 @@ import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { Plus, BookOpen, Clock, MapPin } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
-// Importação do componente que o José Arthur fez
 import { EmptyState } from "@/components/EmptyState";
-// Importação do contexto para ler as disciplinas
 import { useSubjects } from "../../context/SubjectContext"; 
 
 const COLORS = {
@@ -27,7 +25,6 @@ const COLORS = {
 
 export default function GradeScreen() {
   const router = useRouter();
-  // Lendo as disciplinas do estado global
   const { mySubjects } = useSubjects();
 
   return (
@@ -54,7 +51,6 @@ export default function GradeScreen() {
           showsVerticalScrollIndicator={false}
         >
           {mySubjects.length === 0 ? (
-            // Se a lista estiver vazia, mostra o EmptyState do José
             <View style={{ flex: 1, marginTop: 40 }}>
               <EmptyState
                 icon={BookOpen}
@@ -65,7 +61,6 @@ export default function GradeScreen() {
               />
             </View>
           ) : (
-            // Se houver disciplinas, mapeia e mostra os cards
             <View style={styles.listContainer}>
               {mySubjects.map((item) => (
                 <View key={item.id} style={styles.scheduleCard}>
@@ -134,7 +129,6 @@ const styles = StyleSheet.create({
   listContainer: {
     gap: 12,
   },
-  // Estilos do Card de Disciplina
   scheduleCard: {
     backgroundColor: COLORS.white,
     borderRadius: 24,
