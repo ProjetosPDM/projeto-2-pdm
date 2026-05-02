@@ -1,23 +1,10 @@
 import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ViewStyle,
-  Dimensions,
-} from "react-native";
 import { LucideIcon } from "lucide-react-native";
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View, ViewStyle } from "react-native";
+import { useTheme } from "../context/ThemeContext";
 
-const COLORS = {
-  primary: "#064E3B",
-  softGreen: "#F0FDF4",
-  white: "#FFFFFF",
-  textMain: "#1A202C",
-  textMuted: "#718096",
-};
+const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 interface EmptyStateProps {
   icon: LucideIcon;
@@ -34,26 +21,30 @@ export const EmptyState = ({
   description,
   actionLabel,
   onActionPressed,
-  isCentered = true,
+  isCentered = true
 }: EmptyStateProps) => {
-  const containerStyle: ViewStyle = {
-    flexGrow: 1,
-    justifyContent: isCentered ? "center" : "flex-start",
-    alignItems: "center",
-    paddingHorizontal: 40,
-    paddingVertical: 32,
-    minHeight: isCentered ? SCREEN_HEIGHT * 0.6 : 0,
-  };
+	const { colors, isDark } = useTheme();
 
-  return (
-    <View style={containerStyle}>
-      <View style={styles.iconContainer}>
-        <Icon size={44} color={COLORS.primary} strokeWidth={1.5} />
-      </View>
+	const styles = createStyles(colors);
 
-      <Text style={styles.title}>{title}</Text>
+	const containerStyle: ViewStyle = {
+		flexGrow: 1,
+		justifyContent: isCentered ? "center" : "flex-start",
+		alignItems: "center",
+		paddingHorizontal: 40,
+		paddingVertical: 32,
+		minHeight: isCentered ? SCREEN_HEIGHT * 0.6 : 0,
+	};
 
-      <Text style={styles.description}>{description}</Text>
+	return (
+		<View style={containerStyle}>
+			<View style={styles.iconContainer}>
+				<Icon size={44} color={isDark ? colors.textMain : colors.primary} strokeWidth={1.5} />
+			</View>
+
+			<Text style={styles.title}>{title}</Text>
+
+			<Text style={styles.description}>{description}</Text>
 
       {actionLabel && onActionPressed && (
         <TouchableOpacity
@@ -68,11 +59,11 @@ export const EmptyState = ({
   );
 };
 
-const styles = StyleSheet.create({
+const createStyles = (colors: any) => StyleSheet.create({
   iconContainer: {
     width: 100,
     height: 100,
-    backgroundColor: COLORS.softGreen,
+    backgroundColor: colors.softGreen,
     borderRadius: 32,
     justifyContent: "center",
     alignItems: "center",
@@ -81,7 +72,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "900",
-    color: COLORS.textMain,
+    color: colors.textMain,
     textAlign: "center",
     letterSpacing: -0.5,
     marginBottom: 12,
@@ -89,26 +80,26 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 15,
     fontWeight: "500",
-    color: COLORS.textMuted,
+    color: colors.textMuted,
     textAlign: "center",
     lineHeight: 24,
   },
   button: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: colors.primary,
     width: "100%",
     height: 56,
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
     marginTop: 40,
-    shadowColor: COLORS.primary,
+    shadowColor: colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.2,
     shadowRadius: 12,
     elevation: 5,
   },
   buttonText: {
-    color: COLORS.white,
+    color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "700",
   },
