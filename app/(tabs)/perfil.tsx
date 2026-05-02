@@ -8,7 +8,9 @@ import {
   Alert, 
   StatusBar, 
   BackHandler, 
-  Platform 
+  Platform,
+  Modal,
+  Pressable
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -19,7 +21,10 @@ import {
   Clock, 
   ChevronRight, 
   Pencil, 
-  Check 
+  Check,
+  Sun,
+  Moon,
+  Smartphone
 } from 'lucide-react-native';
 
 import { useSubjects } from '../../context/SubjectContext';
@@ -32,6 +37,8 @@ export default function PerfilScreen() {
   const [estaEditando, setEstaEditando] = useState(false);
   const [nomeTemp, setNomeTemp] = useState(userName);
   
+  const [modalTemaVisivel, setModalTemaVisivel] = useState(false);
+  
   const isApproved = true; 
 
   const handleSalvarNome = async () => {
@@ -43,7 +50,6 @@ export default function PerfilScreen() {
     setEstaEditando(false);
   };
 
-  // Função para fechar o app (Nativa Android)
   const handleSair = () => {
     if (Platform.OS === 'android') {
       Alert.alert(
@@ -58,22 +64,14 @@ export default function PerfilScreen() {
         ]
       );
     } else {
-      // Aviso específico para iOS onde o sistema não permite fechar via código
       Alert.alert("Aviso", "No iOS, você deve fechar o aplicativo deslizando para cima.");
     }
   };
 
-  const alterarAparencia = () => {
-    Alert.alert(
-      "Aparência",
-      "Escolha como o aplicativo deve ser exibido:",
-      [
-        { text: "Claro", onPress: () => setThemeMode('light') },
-        { text: "Escuro", onPress: () => setThemeMode('dark') },
-        { text: "Padrão do Sistema", onPress: () => setThemeMode('system') },
-        { text: "Cancelar", style: "cancel" }
-      ]
-    );
+  // Função para aplicar o tema e fechar o modal
+  const selecionarTema = (modo: 'light' | 'dark' | 'system') => {
+    setThemeMode(modo);
+    setModalTemaVisivel(false);
   };
 
   const styles = createStyles(colors);
@@ -148,21 +146,20 @@ export default function PerfilScreen() {
             <TouchableOpacity 
               style={styles.actionButton} 
               activeOpacity={0.7}
-              onPress={alterarAparencia}
+              onPress={() => setModalTemaVisivel(true)}
             >
               <View style={styles.actionIcon}>
                 <Settings size={20} color={colors.textMain} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={styles.actionText}>Configurações</Text>
+                <Text style={styles.actionText}>Aparência</Text>
                 <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '500' }}>
-                  Tema: {themeMode === 'system' ? 'Padrão do Sistema' : themeMode === 'light' ? 'Claro' : 'Escuro'}
+                  {themeMode === 'system' ? 'Padrão do Sistema' : themeMode === 'light' ? 'Tema Claro' : 'Tema Escuro'}
                 </Text>
               </View>
               <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
 
-            {/* BOTÃO DE SAIR ATUALIZADO */}
             <TouchableOpacity 
               style={[styles.actionButton, { marginTop: 12 }]} 
               activeOpacity={0.7}
@@ -175,6 +172,65 @@ export default function PerfilScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* MODAL DE SELEÇÃO DE TEMA */}
+        <Modal
+          visible={modalTemaVisivel}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => setModalTemaVisivel(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <Pressable style={styles.modalBackdrop} onPress={() => setModalTemaVisivel(false)} />
+            
+            <View style={styles.modalContent}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>Escolher Aparência</Text>
+              </View>
+
+              <TouchableOpacity 
+                style={[styles.themeOption, themeMode === 'light' && styles.themeOptionSelected]} 
+                onPress={() => selecionarTema('light')}
+              >
+                <Sun size={24} color={themeMode === 'light' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.themeOptionText, themeMode === 'light' && { color: colors.primary, fontWeight: '700' }]}>
+                  Claro
+                </Text>
+                {themeMode === 'light' && <Check size={20} color={colors.primary} />}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.themeOption, themeMode === 'dark' && styles.themeOptionSelected]} 
+                onPress={() => selecionarTema('dark')}
+              >
+                <Moon size={24} color={themeMode === 'dark' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.themeOptionText, themeMode === 'dark' && { color: colors.primary, fontWeight: '700' }]}>
+                  Escuro
+                </Text>
+                {themeMode === 'dark' && <Check size={20} color={colors.primary} />}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={[styles.themeOption, themeMode === 'system' && styles.themeOptionSelected]} 
+                onPress={() => selecionarTema('system')}
+              >
+                <Smartphone size={24} color={themeMode === 'system' ? colors.primary : colors.textMuted} />
+                <Text style={[styles.themeOptionText, themeMode === 'system' && { color: colors.primary, fontWeight: '700' }]}>
+                  Padrão do Sistema
+                </Text>
+                {themeMode === 'system' && <Check size={20} color={colors.primary} />}
+              </TouchableOpacity>
+
+              <TouchableOpacity 
+                style={styles.modalCancelButton} 
+                onPress={() => setModalTemaVisivel(false)}
+              >
+                <Text style={styles.modalCancelText}>Cancelar</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
       </View>
     </SafeAreaProvider>
   );
@@ -230,4 +286,66 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   actionIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   actionText: { fontSize: 15, fontWeight: '700', color: colors.textMain, flex: 1 },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  modalHeader: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textMain,
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  themeOptionSelected: {
+    backgroundColor: colors.softGreen,
+    borderColor: colors.accent,
+  },
+  themeOptionText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textMain,
+    marginLeft: 16,
+  },
+  modalCancelButton: {
+    marginTop: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: colors.background,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
 });
