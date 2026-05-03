@@ -13,16 +13,7 @@ import {
   buscarNomeUsuarioDB,
   atualizarNomeUsuarioDB,
 } from "../utils/database";
-
-export interface Subject {
-  id: string;
-  name: string;
-  prof: string;
-  schedule: string;
-  timeStart: string;
-  timeEnd: string;
-  location: string;
-}
+import { Subject } from "@/types/Subject";
 
 interface SubjectContextData {
   mySubjects: Subject[];

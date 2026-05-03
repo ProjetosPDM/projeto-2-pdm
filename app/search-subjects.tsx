@@ -3,8 +3,9 @@ import { View, Text, StyleSheet, TextInput, FlatList, TouchableOpacity } from 'r
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Search, X, Check, ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { useSubjects, Subject } from '../context/SubjectContext'; 
 import { useTheme } from '../context/ThemeContext';
+import { Subject } from '@/types/Subject';
+import { useSubjects } from '@/context/SubjectContext';
 
 const ALL_SUBJECTS: Subject[] = [
   { id: '1', name: 'Programação de Dispositivos Móveis', prof: 'Luiz Onofre', schedule: 'Segunda-feira', timeStart: '08:00', timeEnd: '09:40', location: 'Lab 4' },
