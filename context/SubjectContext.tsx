@@ -15,6 +15,26 @@ import {
 } from "../utils/database";
 import { Subject } from "@/types/Subject";
 
+const ordemDias: Record<string, number> = {
+  "Segunda-feira": 1,
+  "Terça-feira": 2,
+  "Quarta-feira": 3,
+  "Quinta-feira": 4,
+  "Sexta-feira": 5,
+};
+
+const ordenar = (lista: Subject[]) => {
+  return [...lista].sort((a, b) => {
+    const diaA = ordemDias[a.schedule] ?? 99;
+    const diaB = ordemDias[b.schedule] ?? 99;
+
+    const diaDiff = diaA - diaB;
+    if (diaDiff !== 0) return diaDiff;
+
+    return a.timeStart.localeCompare(b.timeStart);
+  });
+};
+
 interface SubjectContextData {
   mySubjects: Subject[];
   userName: string;
@@ -45,7 +65,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         timeEnd: d.horaFim,
         location: d.local,
       }));
-      setMySubjects(formatados);
+
+      setMySubjects(ordenar(formatados));
 
       const nomeSalvo = await buscarNomeUsuarioDB();
       if (nomeSalvo) setUserName(nomeSalvo);
@@ -59,10 +80,11 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
       for (const subject of newSubjects) {
         await salvarDisciplinaDB(subject);
       }
+
       setMySubjects((prev) => {
         const existingIds = new Set(prev.map((s) => s.id));
         const filteredNew = newSubjects.filter((s) => !existingIds.has(s.id));
-        return [...prev, ...filteredNew];
+        return ordenar([...prev, ...filteredNew]);
       });
     } catch (error) {
       console.error("Erro ao adicionar no banco:", error);
@@ -72,7 +94,7 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
   const removeSubject = async (id: string) => {
     try {
       await removerDisciplinaDB(id);
-      setMySubjects((prev) => prev.filter((s) => s.id !== id));
+      setMySubjects((prev) => ordenar(prev.filter((s) => s.id !== id)));
     } catch (error) {
       console.error("Erro ao remover do banco:", error);
     }
