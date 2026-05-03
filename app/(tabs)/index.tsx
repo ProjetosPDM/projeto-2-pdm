@@ -25,6 +25,7 @@ import {
   timeToMinutes,
   calculateProgress,
 } from "@/utils/date";
+import { EmptyState } from "@/components/EmptyState";
 
 export default function HomeScreen() {
   const { mySubjects, userName } = useSubjects();
@@ -138,10 +139,11 @@ export default function HomeScreen() {
           ) : null}
 
           {mySubjects.filter((s) => s.schedule === getToday()).length === 0 && (
-            <View style={styles.noClassesToday}>
-              <BookOpen size={40} color={colors.border} />
-              <Text style={styles.noClassesText}>Sem aulas para hoje.</Text>
-            </View>
+            <EmptyState
+              icon={BookOpen}
+              title="Sem aulas para hoje"
+              description="Aproveite o tempo livre ou adicione novas disciplinas."
+            />
           )}
 
           {proximasAulas.length > 0 && (
