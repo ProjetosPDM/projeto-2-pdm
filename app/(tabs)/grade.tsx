@@ -1,20 +1,20 @@
+import { useRouter } from "expo-router";
+import { BookOpen, Plus } from "lucide-react-native";
 import React from "react";
 import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
   Alert,
+  ScrollView,
   StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { Plus, BookOpen, Clock, Trash2 } from "lucide-react-native";
-import { useRouter } from "expo-router";
 
 import { EmptyState } from "@/components/EmptyState";
+import { ScheduleCard } from "@/components/ScheduleCard";
 import { useSubjects } from "../../context/SubjectContext";
-
 import { useTheme } from "../../context/ThemeContext";
 
 export default function GradeScreen() {
@@ -42,7 +42,6 @@ export default function GradeScreen() {
   return (
     <SafeAreaProvider>
       <View style={styles.container}>
-        {/* Ajusta a barra de status conforme o tema */}
         <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
 
         <SafeAreaView edges={["top"]} style={styles.safeHeader}>
@@ -77,42 +76,12 @@ export default function GradeScreen() {
             </View>
           ) : (
             <View style={styles.listContainer}>
-              {mySubjects.map((item) => (
-                <View key={item.id} style={styles.scheduleCard}>
-                  <View style={styles.timeTag}>
-                    <Text style={styles.timeStart}>{item.timeStart}</Text>
-                    <Text style={styles.timeEnd}>{item.timeEnd}</Text>
-                  </View>
-
-                  <View style={styles.cardInfo}>
-                    <Text style={styles.subjectText} numberOfLines={1}>
-                      {item.name}
-                    </Text>
-
-                    <View style={styles.detailsRow}>
-                      <Text style={styles.profText}>{item.prof}</Text>
-                      <View style={styles.dot} />
-                      <Text style={styles.locationText}>{item.location}</Text>
-                    </View>
-
-                    <View style={styles.dayTag}>
-                      <Clock
-                        size={12}
-                        color={colors.accent}
-                        style={{ marginRight: 4 }}
-                      />
-                      <Text style={styles.dayText}>{item.schedule}</Text>
-                    </View>
-                  </View>
-
-                  <TouchableOpacity
-                    style={styles.deleteButton}
-                    onPress={() => confirmarRemocao(item.id, item.name)}
-                    activeOpacity={0.6}
-                  >
-                    <Trash2 size={20} color={colors.danger} strokeWidth={2} />
-                  </TouchableOpacity>
-                </View>
+              {mySubjects.map((subject) => (
+                <ScheduleCard
+                  key={subject.id}
+                  subject={subject}
+                  onDelete={() => confirmarRemocao(subject.id, subject.name)}
+                />
               ))}
             </View>
           )}
