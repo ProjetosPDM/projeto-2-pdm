@@ -1,6 +1,6 @@
-import { Stack } from 'expo-router';
-import { SubjectProvider } from '../context/SubjectContext'; 
-import { ThemeProvider } from '../context/ThemeContext'; // Importação do novo contexto de tema
+import { Stack } from "expo-router";
+import { SubjectProvider } from "../context/SubjectContext";
+import { ThemeProvider } from "../context/ThemeContext";
 
 export default function RootLayout() {
   return (
@@ -8,9 +8,9 @@ export default function RootLayout() {
       <SubjectProvider>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(tabs)" />
-          <Stack.Screen 
-            name="search-subjects" 
-            options={{ presentation: 'modal', animation: 'slide_from_bottom' }} 
+          <Stack.Screen
+            name="search-subjects"
+            options={{ presentation: "modal", animation: "slide_from_bottom" }}
           />
         </Stack>
       </SubjectProvider>

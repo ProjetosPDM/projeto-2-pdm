@@ -1,4 +1,3 @@
-// constants/Colors.ts
 export const ThemeColors = {
   light: {
     primary: "#064E3B",
@@ -14,9 +13,9 @@ export const ThemeColors = {
     dangerLight: "#FEF2F2",
   },
   dark: {
-    primary: "#10B981", // Invertemos um pouco para o verde brilhar no escuro
+    primary: "#10B981",
     accent: "#34D399",
-    background: "#0F172A", // Azul muito escuro (estilo GitHub/Vercel)
+    background: "#0F172A",
     card: "#1E293B",
     textMain: "#F8FAFB",
     textMuted: "#94A3B8",
@@ -25,5 +24,5 @@ export const ThemeColors = {
     danger: "#F87171",
     tabBar: "#1E293B",
     dangerLight: "rgba(248, 113, 113, 0.1)",
-  }
+  },
 };

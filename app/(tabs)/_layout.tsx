@@ -3,28 +3,27 @@ import { View, StyleSheet, Platform, Dimensions } from "react-native";
 import { LayoutGrid, BookOpen, User } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-// Importação do hook de tema
 import { useTheme } from "../../context/ThemeContext";
 
 const { width } = Dimensions.get("window");
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme(); // Consumindo o tema atual
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: true,
-        tabBarActiveTintColor: colors.primary, // Cor dinâmica
-        tabBarInactiveTintColor: colors.textMuted, // Cor dinâmica
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textMuted,
         tabBarStyle: [
           styles.navBar,
           {
-            backgroundColor: colors.card, // Fundo da barra muda com o tema
+            backgroundColor: colors.card,
             borderColor: colors.border,
-            borderTopWidth: isDark ? 1 : 0, // Adiciona uma borda sutil no dark mode
+            borderTopWidth: isDark ? 1 : 0,
             bottom: Math.max(insets.bottom + 8, 28),
           },
         ],
@@ -83,10 +82,10 @@ export default function TabLayout() {
                 focused && { backgroundColor: colors.softGreen },
               ]}
             >
-              <User 
-                size={24} 
-                color={focused ? colors.primary : color} 
-                strokeWidth={focused ? 2.5 : 1.5} 
+              <User
+                size={24}
+                color={focused ? colors.primary : color}
+                strokeWidth={focused ? 2.5 : 1.5}
               />
             </View>
           ),

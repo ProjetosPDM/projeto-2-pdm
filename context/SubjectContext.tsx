@@ -1,56 +1,73 @@
-import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { 
-  inicializarBanco, 
-  buscarDisciplinasDB, 
-  salvarDisciplinaDB, 
+import React, {
+  createContext,
+  useState,
+  useContext,
+  ReactNode,
+  useEffect,
+} from "react";
+import {
+  inicializarBanco,
+  buscarDisciplinasDB,
+  salvarDisciplinaDB,
   removerDisciplinaDB,
-  buscarNomeUsuarioDB, // Nova função
-  atualizarNomeUsuarioDB // Nova função
-} from '../utils/database';
+  buscarNomeUsuarioDB,
+  atualizarNomeUsuarioDB,
+} from "../utils/database";
+import { Subject } from "@/types/Subject";
 
-export interface Subject {
-  id: string;
-  name: string;
-  prof: string;
-  schedule: string;
-  timeStart: string;
-  timeEnd: string;
-  location: string;
-}
+const ordemDias: Record<string, number> = {
+  "Segunda-feira": 1,
+  "Terça-feira": 2,
+  "Quarta-feira": 3,
+  "Quinta-feira": 4,
+  "Sexta-feira": 5,
+};
+
+const ordenar = (lista: Subject[]) => {
+  return [...lista].sort((a, b) => {
+    const diaA = ordemDias[a.schedule] ?? 99;
+    const diaB = ordemDias[b.schedule] ?? 99;
+
+    const diaDiff = diaA - diaB;
+    if (diaDiff !== 0) return diaDiff;
+
+    return a.timeStart.localeCompare(b.timeStart);
+  });
+};
 
 interface SubjectContextData {
   mySubjects: Subject[];
-  userName: string; // Adicionado
+  userName: string;
   addSubjects: (subjects: Subject[]) => Promise<void>;
   removeSubject: (id: string) => Promise<void>;
-  updateUserName: (name: string) => Promise<void>; // Adicionado
+  updateUserName: (name: string) => Promise<void>;
 }
 
-const SubjectContext = createContext<SubjectContextData>({} as SubjectContextData);
+const SubjectContext = createContext<SubjectContextData>(
+  {} as SubjectContextData,
+);
 
 export const SubjectProvider = ({ children }: { children: ReactNode }) => {
   const [mySubjects, setMySubjects] = useState<Subject[]>([]);
-  const [userName, setUserName] = useState<string>("Estudante"); // Estado do nome
+  const [userName, setUserName] = useState<string>("Estudante");
 
-  // 1. Carregamento Inicial
   useEffect(() => {
     const carregarDadosIniciais = async () => {
       await inicializarBanco();
-      
-      // Busca Disciplinas
+
       const dadosDoBanco = await buscarDisciplinasDB();
-      const formatados = (dadosDoBanco as any[]).map(d => ({
+      const formatados = (dadosDoBanco as any[]).map((d) => ({
         id: d.id,
         name: d.nome,
         prof: d.professor,
         schedule: d.diaSemana,
         timeStart: d.horaInicio,
         timeEnd: d.horaFim,
-        location: d.local
+        location: d.local,
       }));
-      setMySubjects(formatados);
 
-      // Busca Nome do Usuário salvo no SQLite
+      setMySubjects(ordenar(formatados));
+
       const nomeSalvo = await buscarNomeUsuarioDB();
       if (nomeSalvo) setUserName(nomeSalvo);
     };
@@ -58,50 +75,50 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     carregarDadosIniciais();
   }, []);
 
-  // 2. Adicionar Disciplinas
   const addSubjects = async (newSubjects: Subject[]) => {
     try {
       for (const subject of newSubjects) {
         await salvarDisciplinaDB(subject);
       }
-      setMySubjects(prev => {
-        const existingIds = new Set(prev.map(s => s.id));
-        const filteredNew = newSubjects.filter(s => !existingIds.has(s.id));
-        return [...prev, ...filteredNew];
+
+      setMySubjects((prev) => {
+        const existingIds = new Set(prev.map((s) => s.id));
+        const filteredNew = newSubjects.filter((s) => !existingIds.has(s.id));
+        return ordenar([...prev, ...filteredNew]);
       });
     } catch (error) {
       console.error("Erro ao adicionar no banco:", error);
     }
   };
 
-  // 3. Remover Disciplina
   const removeSubject = async (id: string) => {
     try {
       await removerDisciplinaDB(id);
-      setMySubjects(prev => prev.filter(s => s.id !== id));
+      setMySubjects((prev) => ordenar(prev.filter((s) => s.id !== id)));
     } catch (error) {
       console.error("Erro ao remover do banco:", error);
     }
   };
 
-  // 4. Atualizar Nome do Usuário (Novo)
   const updateUserName = async (newName: string) => {
     try {
-      await atualizarNomeUsuarioDB(newName); // Salva no SQLite
-      setUserName(newName); // Atualiza na memória (UI)
+      await atualizarNomeUsuarioDB(newName);
+      setUserName(newName);
     } catch (error) {
       console.error("Erro ao atualizar nome:", error);
     }
   };
 
   return (
-    <SubjectContext.Provider value={{ 
-      mySubjects, 
-      userName, 
-      addSubjects, 
-      removeSubject, 
-      updateUserName 
-    }}>
+    <SubjectContext.Provider
+      value={{
+        mySubjects,
+        userName,
+        addSubjects,
+        removeSubject,
+        updateUserName,
+      }}
+    >
       {children}
     </SubjectContext.Provider>
   );
