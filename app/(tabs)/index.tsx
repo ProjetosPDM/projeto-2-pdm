@@ -17,7 +17,6 @@ import {
   BookOpen,
 } from "lucide-react-native";
 
-// Importando os hooks de dados e tema
 import { useSubjects } from "../../context/SubjectContext";
 import { useTheme } from "../../context/ThemeContext";
 import {
@@ -29,10 +28,9 @@ import {
 
 export default function HomeScreen() {
   const { mySubjects, userName } = useSubjects();
-  const { colors, isDark } = useTheme(); // Consumindo o tema atual
+  const { colors, isDark } = useTheme();
   const currentDate = getFormattedDate();
 
-  // Lógica para organizar as aulas do dia
   const { aulaAtual, proximasAulas, aulasEncerradas } = useMemo(() => {
     const hoje = getToday();
     const agoraEmMinutos = new Date().getHours() * 60 + new Date().getMinutes();
@@ -45,18 +43,17 @@ export default function HomeScreen() {
       aulaAtual: aulasDeHoje.find(
         (s) =>
           agoraEmMinutos >= timeToMinutes(s.timeStart) &&
-          agoraEmMinutos <= timeToMinutes(s.timeEnd)
+          agoraEmMinutos <= timeToMinutes(s.timeEnd),
       ),
       proximasAulas: aulasDeHoje.filter(
-        (s) => agoraEmMinutos < timeToMinutes(s.timeStart)
+        (s) => agoraEmMinutos < timeToMinutes(s.timeStart),
       ),
       aulasEncerradas: aulasDeHoje.filter(
-        (s) => agoraEmMinutos > timeToMinutes(s.timeEnd)
+        (s) => agoraEmMinutos > timeToMinutes(s.timeEnd),
       ),
     };
   }, [mySubjects]);
 
-  // Geramos os estilos passando as cores do tema
   const styles = createStyles(colors, isDark);
 
   return (
@@ -84,12 +81,13 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
-          {/* SEÇÃO: AULA AGORA */}
           {aulaAtual ? (
             <View style={styles.featuredSection}>
               <View style={styles.liveBadge}>
                 <View style={styles.pulseDot} />
-                <Text style={[styles.liveText, { color: colors.accent }]}>AULA AGORA</Text>
+                <Text style={[styles.liveText, { color: colors.accent }]}>
+                  AULA AGORA
+                </Text>
               </View>
 
               <View style={styles.mainCard}>
@@ -100,7 +98,11 @@ export default function HomeScreen() {
                   <View style={styles.progressTextRow}>
                     <Text style={styles.progressLabel}>Tempo de aula</Text>
                     <Text style={styles.progressPercent}>
-                      {calculateProgress(aulaAtual.timeStart, aulaAtual.timeEnd)}%
+                      {calculateProgress(
+                        aulaAtual.timeStart,
+                        aulaAtual.timeEnd,
+                      )}
+                      %
                     </Text>
                   </View>
                   <View style={styles.progressTrack}>
@@ -111,7 +113,7 @@ export default function HomeScreen() {
                           backgroundColor: colors.accent,
                           width: `${calculateProgress(
                             aulaAtual.timeStart,
-                            aulaAtual.timeEnd
+                            aulaAtual.timeEnd,
                           )}%`,
                         },
                       ]}
@@ -135,7 +137,6 @@ export default function HomeScreen() {
             </View>
           ) : null}
 
-          {/* ESTADO VAZIO */}
           {mySubjects.filter((s) => s.schedule === getToday()).length === 0 && (
             <View style={styles.noClassesToday}>
               <BookOpen size={40} color={colors.border} />
@@ -143,7 +144,6 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* SEÇÃO: PRÓXIMAS DO DIA */}
           {proximasAulas.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
@@ -181,11 +181,13 @@ export default function HomeScreen() {
             </>
           )}
 
-          {/* SEÇÃO: ENCERRADAS */}
           {aulasEncerradas.length > 0 && (
             <>
               <Text
-                style={[styles.sectionTitle, { marginTop: 32, marginBottom: 16 }]}
+                style={[
+                  styles.sectionTitle,
+                  { marginTop: 32, marginBottom: 16 },
+                ]}
               >
                 Encerradas
               </Text>
@@ -209,7 +211,6 @@ export default function HomeScreen() {
   );
 }
 
-// Funções de estilos dinâmicos
 const createStyles = (colors: any, isDark: boolean) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   safeHeader: { backgroundColor: colors.background },

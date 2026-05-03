@@ -68,7 +68,6 @@ export default function PerfilScreen() {
     }
   };
 
-  // Função para aplicar o tema e fechar o modal
   const selecionarTema = (modo: 'light' | 'dark' | 'system') => {
     setThemeMode(modo);
     setModalTemaVisivel(false);

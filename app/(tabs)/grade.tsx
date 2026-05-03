@@ -14,31 +14,29 @@ import { useRouter } from "expo-router";
 
 import { EmptyState } from "@/components/EmptyState";
 import { useSubjects } from "../../context/SubjectContext";
-// Importação do hook de tema
+
 import { useTheme } from "../../context/ThemeContext";
 
 export default function GradeScreen() {
   const router = useRouter();
-  const { colors, isDark } = useTheme(); // Consumindo o tema
+  const { colors, isDark } = useTheme();
   const { mySubjects, removeSubject } = useSubjects();
 
-  // Função para confirmar a exclusão
   const confirmarRemocao = (id: string, nome: string) => {
     Alert.alert(
       "Remover Disciplina",
       `Tem certeza que deseja remover "${nome}" da sua grade?`,
       [
         { text: "Cancelar", style: "cancel" },
-        { 
-          text: "Remover", 
-          style: "destructive", 
-          onPress: () => removeSubject(id) 
+        {
+          text: "Remover",
+          style: "destructive",
+          onPress: () => removeSubject(id),
         },
-      ]
+      ],
     );
   };
 
-  // Geramos os estilos baseados no tema atual
   const styles = createStyles(colors);
 
   return (
@@ -124,7 +122,6 @@ export default function GradeScreen() {
   );
 }
 
-// Estilos dinâmicos que recebem as cores do tema
 const createStyles = (colors: any) => StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   safeHeader: { backgroundColor: colors.background },
