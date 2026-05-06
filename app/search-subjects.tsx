@@ -6,7 +6,6 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  Alert,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { Search, X, Check, ArrowLeft } from "lucide-react-native";
@@ -18,6 +17,7 @@ import { useSubjects } from "@/context/SubjectContext";
 
 import { MOCK_DISCIPLINAS } from "@/data/mockDisciplinas";
 import { verificaChoqueHorario } from "@/utils/date";
+import {ConflictModal} from "@/components/ConflictModal";
 
 export default function SearchSubjects() {
   const router = useRouter();
@@ -29,6 +29,9 @@ export default function SearchSubjects() {
 
   const [isSaving, setIsSaving] = useState(false);
   const isSavingRef = useRef(false);
+
+  const [conflictData, setConflictData] = useState<any>(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
 
   useEffect(() => {
     if (!isSavingRef.current) {
@@ -57,12 +60,16 @@ export default function SearchSubjects() {
     if (disciplinaDesejada) {
       for (const aulaNova of disciplinaDesejada.classes) {
         const choque = verificaChoqueHorario(aulaNova, aulasJaMarcadas);
-        
+
         if (choque) {
-          Alert.alert(
-            "Choque de Horário",
-            `A aula de "${disciplinaDesejada.name}" na ${aulaNova.schedule} (${aulaNova.timeStart} às ${aulaNova.timeEnd}) choca com "${choque.nomeDisciplina}".`
-          );
+          setConflictData({
+            newSubject: disciplinaDesejada.name,
+            conflictingSubject: choque.nomeDisciplina,
+            schedule: aulaNova.schedule,
+            timeStart: aulaNova.timeStart,
+            timeEnd: aulaNova.timeEnd
+          });
+          setShowConflictModal(true);
           return;
         }
       }
@@ -182,6 +189,18 @@ export default function SearchSubjects() {
           </Text>
         </TouchableOpacity>
       </View>
+
+      {conflictData && (
+        <ConflictModal
+          visible={showConflictModal}
+          onClose={() => setShowConflictModal(false)}
+          newSubject={conflictData.newSubject}
+          conflictingSubject={conflictData.conflictingSubject}
+          schedule={conflictData.schedule}
+          timeStart={conflictData.timeStart}
+          timeEnd={conflictData.timeEnd}
+        />
+      )}
     </SafeAreaView>
   );
 }
