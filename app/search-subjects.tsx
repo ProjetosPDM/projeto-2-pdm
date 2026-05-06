@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef} from "react";
 import {
   View,
   Text,
@@ -15,96 +15,99 @@ import { useTheme } from "../context/ThemeContext";
 import { Subject } from "@/types/Subject";
 import { useSubjects } from "@/context/SubjectContext";
 
-const ALL_SUBJECTS: Subject[] = [
-  {
-    id: "1",
-    name: "Programação de Dispositivos Móveis",
-    prof: "Luiz Onofre",
-    schedule: "Segunda-feira",
-    timeStart: "08:00",
-    timeEnd: "09:40",
-    location: "Lab 4",
-  },
-  {
-    id: "2",
-    name: "Banco de Dados I",
-    prof: "Fabio Gomes",
-    schedule: "Terça-feira",
-    timeStart: "10:00",
-    timeEnd: "11:40",
-    location: "Lab 2",
-  },
-  {
-    id: "3",
-    name: "Redes de Computadores",
-    prof: "Gustavo Wagner",
-    schedule: "Quarta-feira",
-    timeStart: "08:00",
-    timeEnd: "09:40",
-    location: "Lab 3",
-  },
-  {
-    id: "4",
-    name: "Inteligência Artificial",
-    prof: "Cândido Egídio",
-    schedule: "Quinta-feira",
-    timeStart: "13:00",
-    timeEnd: "14:40",
-    location: "Sala 15",
-  },
-  {
-    id: "5",
-    name: "Sistemas Operacionais",
-    prof: "Erick de Melo",
-    schedule: "Sexta-feira",
-    timeStart: "10:00",
-    timeEnd: "11:40",
-    location: "Lab 1",
-  },
-];
+import { MOCK_DISCIPLINAS } from "@/data/mockDisciplinas";
+import { verificaChoqueHorario } from "@/utils/date";
+import {ConflictModal} from "@/components/ConflictModal";
 
 export default function SearchSubjects() {
   const router = useRouter();
-  const { addSubjects, removeSubject, mySubjects } = useSubjects();
+  const { addSubjects, removeSubjectGroup, mySubjects } = useSubjects();
   const { colors } = useTheme();
 
   const [searchText, setSearchText] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
 
+  const [isSaving, setIsSaving] = useState(false);
+  const isSavingRef = useRef(false);
+
+  const [conflictData, setConflictData] = useState<any>(null);
+  const [showConflictModal, setShowConflictModal] = useState(false);
+
   useEffect(() => {
-    const initialSelected = mySubjects.map((s) => s.id);
-    setSelectedIds(initialSelected);
+    if (!isSavingRef.current) {
+      const initialSelected = Array.from(new Set(mySubjects.map((s) => s.id.replace(/[a-z]/g, ''))));
+      setSelectedIds(initialSelected);
+    }
   }, [mySubjects]);
 
-  const filteredSubjects = ALL_SUBJECTS.filter(
+  const filteredSubjects = MOCK_DISCIPLINAS.filter(
     (s) =>
       s.name.toLowerCase().includes(searchText.toLowerCase()) ||
       s.prof.toLowerCase().includes(searchText.toLowerCase()),
   );
 
-  const toggleSelect = (id: string) => {
-    if (selectedIds.includes(id)) {
-      setSelectedIds(selectedIds.filter((item) => item !== id));
-    } else {
-      setSelectedIds([...selectedIds, id]);
+  const toggleSelect = (idSelecionado: string) => {
+    if (selectedIds.includes(idSelecionado)) {
+      setSelectedIds(selectedIds.filter((item) => item !== idSelecionado));
+      return;
     }
+
+    const disciplinaDesejada = MOCK_DISCIPLINAS.find(d => d.id === idSelecionado);
+    
+    const disciplinasJaMarcadas = MOCK_DISCIPLINAS.filter(d => selectedIds.includes(d.id));
+    const aulasJaMarcadas = disciplinasJaMarcadas.flatMap(d => d.classes.map(c => ({...c, nomeDisciplina: d.name})));
+
+    if (disciplinaDesejada) {
+      for (const aulaNova of disciplinaDesejada.classes) {
+        const choque = verificaChoqueHorario(aulaNova, aulasJaMarcadas);
+
+        if (choque) {
+          setConflictData({
+            newSubject: disciplinaDesejada.name,
+            conflictingSubject: choque.nomeDisciplina,
+            schedule: aulaNova.schedule,
+            timeStart: aulaNova.timeStart,
+            timeEnd: aulaNova.timeEnd
+          });
+          setShowConflictModal(true);
+          return;
+        }
+      }
+    }
+
+    setSelectedIds([...selectedIds, idSelecionado]);
   };
 
   const handleConfirm = async () => {
-    const initialIds = mySubjects.map((s) => s.id);
+    isSavingRef.current = true;
+    setIsSaving(true);
 
-    const toAdd = ALL_SUBJECTS.filter(
+    const initialIds = Array.from(new Set(mySubjects.map((s) => s.id.replace(/[a-z]/g, ''))));
+
+    const toAddGrouped = MOCK_DISCIPLINAS.filter(
       (s) => selectedIds.includes(s.id) && !initialIds.includes(s.id),
     );
 
     const toRemoveIds = initialIds.filter((id) => !selectedIds.includes(id));
 
-    if (toAdd.length > 0) {
-      await addSubjects(toAdd);
+    const toAddFlat: Subject[] = toAddGrouped.flatMap(subject => 
+      subject.classes.map(aula => ({
+        id: aula.id,
+        name: subject.name,
+        prof: subject.prof,
+        schedule: aula.schedule,
+        timeStart: aula.timeStart,
+        timeEnd: aula.timeEnd,
+        location: aula.location
+      }))
+    );
+
+    if (toAddFlat.length > 0) {
+      await addSubjects(toAddFlat);
     }
 
-    for (const id of toRemoveIds) {
-      await removeSubject(id);
+    for (const subjectId of toRemoveIds) {
+      await removeSubjectGroup(subjectId);
     }
 
     router.back();
@@ -146,6 +149,11 @@ export default function SearchSubjects() {
         contentContainerStyle={styles.list}
         renderItem={({ item }) => {
           const isSelected = selectedIds.includes(item.id);
+          
+          const diasDaSemana = item.classes
+            .map(c => c.schedule.split('-')[0]) 
+            .join(' e ');
+
           return (
             <TouchableOpacity
               style={[styles.subjectCard, isSelected && styles.selectedCard]}
@@ -155,7 +163,7 @@ export default function SearchSubjects() {
               <View style={styles.info}>
                 <Text style={styles.subjectName}>{item.name}</Text>
                 <Text style={styles.subjectDetails}>
-                  {item.prof} • {item.schedule} {item.timeStart}
+                  {item.prof} • {diasDaSemana}
                 </Text>
               </View>
               <View
@@ -171,12 +179,28 @@ export default function SearchSubjects() {
       />
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.confirmButton} onPress={handleConfirm}>
+        <TouchableOpacity
+          style={styles.confirmButton}
+          onPress={handleConfirm}
+          disabled={isSaving}
+        >
           <Text style={styles.confirmText}>
-            Confirmar Alterações ({selectedIds.length})
+            {isSaving ? 'Salvando alterações...' : `Confirmar Alterações (${selectedIds.length})`}
           </Text>
         </TouchableOpacity>
       </View>
+
+      {conflictData && (
+        <ConflictModal
+          visible={showConflictModal}
+          onClose={() => setShowConflictModal(false)}
+          newSubject={conflictData.newSubject}
+          conflictingSubject={conflictData.conflictingSubject}
+          schedule={conflictData.schedule}
+          timeStart={conflictData.timeStart}
+          timeEnd={conflictData.timeEnd}
+        />
+      )}
     </SafeAreaView>
   );
 }

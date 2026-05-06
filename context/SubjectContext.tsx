@@ -41,6 +41,7 @@ interface SubjectContextData {
   addSubjects: (subjects: Subject[]) => Promise<void>;
   removeSubject: (id: string) => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
+  removeSubjectGroup: (baseId: string) => Promise<void>;
 }
 
 const SubjectContext = createContext<SubjectContextData>(
@@ -100,6 +101,24 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const removeSubjectGroup = async (baseId: string) => {
+    try {
+      const idsParaRemover = mySubjects
+        .filter((s) => s.id.replace(/[a-z]/g, "") === baseId)
+        .map((s) => s.id);
+
+      for (const id of idsParaRemover) {
+        await removerDisciplinaDB(id);
+      }
+
+      setMySubjects((prev) => 
+        ordenar(prev.filter((s) => !idsParaRemover.includes(s.id)))
+      );
+    } catch (error) {
+      console.error("Erro ao remover grupo de disciplinas do banco:", error);
+    }
+  };
+
   const updateUserName = async (newName: string) => {
     try {
       await atualizarNomeUsuarioDB(newName);
@@ -116,6 +135,7 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         userName,
         addSubjects,
         removeSubject,
+        removeSubjectGroup,
         updateUserName,
       }}
     >

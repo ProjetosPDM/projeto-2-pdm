@@ -20,18 +20,20 @@ import { useTheme } from "../../context/ThemeContext";
 export default function GradeScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
-  const { mySubjects, removeSubject } = useSubjects();
+  const { mySubjects, removeSubjectGroup } = useSubjects();
 
   const confirmarRemocao = (id: string, nome: string) => {
+    const baseId = id.replace(/[a-z]/g, '');
+
     Alert.alert(
       "Remover Disciplina",
-      `Tem certeza que deseja remover "${nome}" da sua grade?`,
+      `Tem certeza que deseja remover "${nome}" e todos os seus horários da grade?`,
       [
         { text: "Cancelar", style: "cancel" },
         {
           text: "Remover",
           style: "destructive",
-          onPress: () => removeSubject(id),
+          onPress: () => removeSubjectGroup(baseId),
         },
       ],
     );
