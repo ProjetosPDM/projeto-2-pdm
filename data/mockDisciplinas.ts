@@ -4,7 +4,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   // --- 1º PERÍODO ---
   {
     id: "1",
-    name: "LPT I",
+    name: "Práticas de Leitura e Produção de Textos I",
     prof: "Anne Alves",
     classes: [
       { id: "1a", schedule: "Quarta-feira", timeStart: "08:40", timeEnd: "10:40", location: "A definir" }
@@ -20,26 +20,19 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "3",
-    name: "Algoritmos 1/2",
-    prof: "André Almeida",
+    name: "Algoritmos",
+    prof: "André Almeida / Álvaro Magnum",
     classes: [
-      { id: "3a", schedule: "Segunda-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" }
+      { id: "3a", schedule: "Segunda-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" },
+      { id: "3b", schedule: "Quinta-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" }
     ],
   },
   {
     id: "4",
-    name: "MAC",
+    name: "Matemática Aplicada à Computação (MAC)",
     prof: "Suemilton Gervazio",
     classes: [
       { id: "4a", schedule: "Terça-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" }
-    ],
-  },
-  {
-    id: "5",
-    name: "Algoritmos 2/2",
-    prof: "Álvaro Magnum",
-    classes: [
-      { id: "5a", schedule: "Quinta-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" }
     ],
   },
   {
@@ -63,7 +56,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "8",
-    name: "PE",
+    name: "Probabilidade e Estatística",
     prof: "Suemilton Gervazio",
     classes: [
       { id: "8a", schedule: "Quarta-feira", timeStart: "10:40", timeEnd: "12:20", location: "A definir" }
@@ -87,7 +80,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "11",
-    name: "LPT II",
+    name: "Práticas de Leitura e Produção de Textos II",
     prof: "Antonio Melo",
     classes: [
       { id: "11a", schedule: "Quinta-feira", timeStart: "13:20", timeEnd: "15:00", location: "A definir" }
@@ -95,7 +88,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "12",
-    name: "LTG",
+    name: "Lógica e Teoria dos Grafos",
     prof: "Artur Oliveira",
     classes: [
       { id: "12a", schedule: "Quinta-feira", timeStart: "15:20", timeEnd: "17:00", location: "A definir" }
@@ -114,7 +107,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "14",
-    name: "PP",
+    name: "Padrões de Projeto",
     prof: "Álvaro Magnum",
     classes: [
       { id: "14a", schedule: "Quinta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
@@ -122,7 +115,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "15",
-    name: "MPC",
+    name: "Metodologia da Pesquisa Científica",
     prof: "Larissa Lavor",
     classes: [
       { id: "15a", schedule: "Terça-feira", timeStart: "10:40", timeEnd: "12:20", location: "A definir" }
@@ -138,7 +131,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "17",
-    name: "DAW I",
+    name: "Desenvolvimento de Aplicações Web I",
     prof: "Jaindson Santana",
     classes: [
       { id: "17a", schedule: "Quinta-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" }
@@ -148,7 +141,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   // --- 4º PERÍODO ---
   {
     id: "18",
-    name: "APS",
+    name: "Análise e Projeto de Sistemas (APS)",
     prof: "Artur Oliveira",
     classes: [
       { id: "18a", schedule: "Quinta-feira", timeStart: "08:40", timeEnd: "10:40", location: "A definir" },
@@ -173,7 +166,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "21",
-    name: "RHT",
+    name: "Relações Humanas no Trabalho (RHT)",
     prof: "Helltonn Maciel",
     classes: [
       { id: "21a", schedule: "Quinta-feira", timeStart: "10:40", timeEnd: "12:20", location: "A definir" }
@@ -181,7 +174,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "22",
-    name: "DAW II",
+    name: "Desenvolvimento de Aplicações Web II",
     prof: "Jaindson Santana",
     classes: [
       { id: "22a", schedule: "Terça-feira", timeStart: "13:20", timeEnd: "17:00", location: "A definir" }
@@ -197,7 +190,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "24",
-    name: "STI",
+    name: "Sociedade e Tecnologia da Informação (STI)",
     prof: "Pedro Pinto",
     classes: [
       { id: "24a", schedule: "Quinta-feira", timeStart: "15:20", timeEnd: "17:00", location: "A definir" }
@@ -207,7 +200,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   // --- 5º PERÍODO ---
   {
     id: "25",
-    name: "DAW III",
+    name: "Desenvolvimento de Aplicações Web III",
     prof: "Gabriel Lima",
     classes: [
       { id: "25a", schedule: "Terça-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
@@ -215,15 +208,16 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "26",
-    name: "PJ I (2/2)",
-    prof: "Hugo Figueiredo",
+    name: "Projeto de Software I (PJ I)",
+    prof: "Anne Alves / Hugo Figueiredo",
     classes: [
-      { id: "26a", schedule: "Quarta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
+      { id: "26a", schedule: "Quinta-feira", timeStart: "13:20", timeEnd: "15:00", location: "A definir" },
+      { id: "26b", schedule: "Quarta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
     ],
   },
   {
     id: "27",
-    name: "PDM",
+    name: "Programação para Dispositivos Móveis (PDM)",
     prof: "André Almeida",
     classes: [
       { id: "27a", schedule: "Sexta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
@@ -231,7 +225,7 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "28",
-    name: "IA",
+    name: "Inteligência Artificial (IA)",
     prof: "Gabriel Lima",
     classes: [
       { id: "28a", schedule: "Segunda-feira", timeStart: "13:20", timeEnd: "15:00", location: "A definir" }
@@ -245,19 +239,11 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
       { id: "29a", schedule: "Segunda-feira", timeStart: "15:20", timeEnd: "17:00", location: "A definir" }
     ],
   },
-  {
-    id: "30",
-    name: "PJ I (1/2)",
-    prof: "Anne Alves",
-    classes: [
-      { id: "30a", schedule: "Quinta-feira", timeStart: "13:20", timeEnd: "15:00", location: "A definir" }
-    ],
-  },
 
   // --- 6º PERÍODO ---
   {
     id: "31",
-    name: "JD",
+    name: "Jogos Digitais",
     prof: "Álvaro Magnum",
     classes: [
       { id: "31a", schedule: "Terça-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
@@ -265,15 +251,16 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "32",
-    name: "PJ II (2/2)",
-    prof: "Renata Pontes",
+    name: "Projeto Integrador II (PJ II)",
+    prof: "Anne Alves / Renata Pontes",
     classes: [
-      { id: "32a", schedule: "Quarta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
-    ],
+      { id: "32a", schedule: "Quinta-feira", timeStart: "15:20", timeEnd: "17:00", location: "A definir" }, // Antigo 1/2
+      { id: "32b", schedule: "Quarta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" } // Antigo 2/2
+    ]
   },
   {
     id: "33",
-    name: "TT",
+    name: "Técnicas de Testes (TT)",
     prof: "Jaindson Santana",
     classes: [
       { id: "33a", schedule: "Quinta-feira", timeStart: "08:40", timeEnd: "12:20", location: "A definir" }
@@ -289,18 +276,10 @@ export const MOCK_DISCIPLINAS: SubjectSearch[] = [
   },
   {
     id: "35",
-    name: "GCM",
+    name: "Gerência de Configuração e Mudanças (GCM)",
     prof: "Álvaro Magnum",
     classes: [
       { id: "35a", schedule: "Terça-feira", timeStart: "15:20", timeEnd: "17:00", location: "A definir" }
     ],
-  },
-  {
-    id: "36",
-    name: "PJ II (1/2)",
-    prof: "Anne Alves",
-    classes: [
-      { id: "36a", schedule: "Quinta-feira", timeStart: "15:20", timeEnd: "17:00", location: "A definir" }
-    ]
   }
 ];
