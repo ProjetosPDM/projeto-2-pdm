@@ -64,3 +64,26 @@ export function calculateProgress(start: string, end: string): number {
   
   return percentage;
 }
+
+/**
+ * Verifica se uma nova aula choca com alguma aula já selecionada na grade.
+ * Utiliza a função timeToMinutes para precisão matemática.
+ * Retorna a aula conflitante se houver choque, ou null se estiver livre.
+ */
+export function verificaChoqueHorario(aulaNova: any, aulasSelecionadas: any[]) {
+  const inicioNovo = timeToMinutes(aulaNova.timeStart);
+  const fimNovo = timeToMinutes(aulaNova.timeEnd);
+
+  for (const aulaExistente of aulasSelecionadas) {
+    if (aulaNova.schedule === aulaExistente.schedule) {
+      const inicioExistente = timeToMinutes(aulaExistente.timeStart);
+      const fimExistente = timeToMinutes(aulaExistente.timeEnd);
+
+      // (Inicio1 < Fim2) E (Fim1 > Inicio2)
+      if (inicioNovo < fimExistente && fimNovo > inicioExistente) {
+        return aulaExistente; // Retorna a aula que deu choque
+      }
+    }
+  }
+  return null;
+}
