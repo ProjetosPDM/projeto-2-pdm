@@ -172,7 +172,6 @@ export default function PerfilScreen() {
           </View>
         </View>
 
-        {/* MODAL DE SELEÇÃO DE TEMA */}
         <Modal
           visible={modalTemaVisivel}
           transparent={true}

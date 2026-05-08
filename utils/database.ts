@@ -57,7 +57,6 @@ export const removerDisciplinaDB = async (id: string) => {
  * Funções para Gerenciamento de Configurações (Perfil e Tema)
  */
 
-// --- NOME DO USUÁRIO ---
 export const atualizarNomeUsuarioDB = async (nome: string) => {
   try {
     return await db.runAsync(
@@ -81,8 +80,6 @@ export const buscarNomeUsuarioDB = async () => {
     return "Usuário";
   }
 };
-
-// --- TEMA DO APLICATIVO (NOVO) ---
 export const salvarTemaDB = async (tema: 'light' | 'dark' | 'system') => {
   try {
     return await db.runAsync(
