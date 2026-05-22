@@ -6,5 +6,6 @@ export interface UserProfile {
   matricula: string;
   role: UserRole;
   is_approved: boolean;
+  email: string;
   updated_at?: string;
 }
