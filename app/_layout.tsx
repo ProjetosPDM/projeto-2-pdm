@@ -16,7 +16,11 @@ function InitialLayout() {
   useEffect(() => {
     if (isLoading) return;
 
-    const inAuthGroup = segments[0] === "(auth)";
+    const firstSegment = segments[0] as string;
+
+    const inAuthGroup = firstSegment === "(auth)";
+    const inAdminGroup = firstSegment === "(admin)";
+    const inTabsGroup = firstSegment === "(tabs)";
 
     if (!session) {
       if (!inAuthGroup) {
