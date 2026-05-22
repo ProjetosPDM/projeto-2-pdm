@@ -21,12 +21,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  const carregarPerfil = async (userId: string) => {
+  const carregarPerfil = async (userId: string, userEmail: string) => {
     try {
       const { data } = await authService.getProfile(userId);
       if (data) {
-        setProfile(data);
-        await salvarPerfilOfflineDB(data);
+        const profileWithEmail: UserProfile = {
+        ...data,
+        email: userEmail
+      };
+        setProfile(profileWithEmail);
+        await salvarPerfilOfflineDB(profileWithEmail);
       }
     } catch (error) {
       const offlineProfile = await buscarPerfilOfflineDB();
@@ -43,7 +47,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        carregarPerfil(session.user.id);
+        carregarPerfil(session.user.id,session.user.email!);
       } else {
         setIsLoading(false);
       }
@@ -53,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        carregarPerfil(session.user.id);
+        carregarPerfil(session.user.id, session.user.email!);
       } else {
         setProfile(null);
       }
