@@ -22,17 +22,59 @@ export const inicializarBanco = async () => {
         local TEXT NOT NULL
       );
 
-      -- Tabela para configurações do app (nome, tema, etc)
+      -- Tabela para configurações do app
       CREATE TABLE IF NOT EXISTS config (
         chave TEXT PRIMARY KEY, 
         valor TEXT
       );
+
+      CREATE TABLE IF NOT EXISTS session_cache (
+        id TEXT PRIMARY KEY,
+        data TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS sync_meta (
+        chave TEXT PRIMARY KEY,
+        last_sync TEXT NOT NULL
+      );
     `);
-    console.log("Banco de dados e tabelas inicializados!");
+    console.log("Banco de dados e todas as tabelas inicializados!");
   } catch (error) {
     console.error("Erro crítico ao inicializar o banco:", error);
   }
 };
+
+export const salvarPerfilOfflineDB = async (perfil: any) => {
+  try {
+    await db.runAsync(
+      'INSERT OR REPLACE INTO session_cache (id, data) VALUES (?, ?)',
+      ['user_profile', JSON.stringify(perfil)]
+    );
+  } catch (error) {
+    console.error("Erro ao salvar perfil offline:", error);
+  }
+};
+
+export const buscarPerfilOfflineDB = async () => {
+  try {
+    const resultado = await db.getFirstAsync(
+      'SELECT data FROM session_cache WHERE id = ?',
+      ['user_profile']
+    );
+    return resultado ? JSON.parse((resultado as any).data) : null;
+  } catch (error) {
+    return null;
+  }
+};
+
+export const limparCacheSessaoDB = async () => {
+  try {
+    await db.runAsync("DELETE FROM session_cache WHERE id = 'user_profile'");
+  } catch (error) {
+    console.error("Erro ao limpar cache:", error);
+  }
+};
+
 
 /**
  * Funções para Gerenciamento de Disciplinas

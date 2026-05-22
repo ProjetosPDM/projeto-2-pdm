@@ -29,11 +29,13 @@ import {
 
 import { useSubjects } from '../../context/SubjectContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useAuth } from '../../context/AuthContext';
 
 export default function PerfilScreen() {
   const { colors, isDark, themeMode, setThemeMode } = useTheme(); 
   const { userName, updateUserName } = useSubjects();
-  
+  const { signOut } = useAuth();
+
   const [estaEditando, setEstaEditando] = useState(false);
   const [nomeTemp, setNomeTemp] = useState(userName);
   
@@ -51,21 +53,10 @@ export default function PerfilScreen() {
   };
 
   const handleSair = () => {
-    if (Platform.OS === 'android') {
-      Alert.alert(
-        "Sair",
-        "Deseja realmente fechar o aplicativo?",
-        [
-          { text: "Não", style: "cancel" },
-          { 
-            text: "Sim", 
-            onPress: () => BackHandler.exitApp() 
-          }
-        ]
-      );
-    } else {
-      Alert.alert("Aviso", "No iOS, você deve fechar o aplicativo deslizando para cima.");
-    }
+    Alert.alert("Sair", "Deseja realmente deslogar?", [
+          { text: "Cancelar", style: "cancel" },
+          { text: "Sair", style: "destructive", onPress: signOut }
+        ]);
   };
 
   const selecionarTema = (modo: 'light' | 'dark' | 'system') => {
