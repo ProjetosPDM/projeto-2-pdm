@@ -28,16 +28,21 @@ function InitialLayout() {
       }
     } else {
       if (profile && !profile.is_approved) {
-        
         const isPendingPage = segments[segments.length - 1] === "pending";
-        
         if (!isPendingPage) {
           router.replace("/(auth)/pending");
         }
-      } 
+      }
       else if (profile?.is_approved) {
-        if (inAuthGroup) {
-          router.replace("/(tabs)");
+
+        if (profile.role === 'admin') {
+          if (!inAdminGroup) {
+            router.replace("/(admin)");
+          }
+        } else {
+          if (!inTabsGroup) {
+            router.replace("/(tabs)");
+          }
         }
       }
     }
@@ -55,6 +60,7 @@ function InitialLayout() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
+      <Stack.Screen name="(admin)" />
       <Stack.Screen
         name="search-subjects"
         options={{ presentation: "modal", animation: "slide_from_bottom" }}
@@ -62,7 +68,6 @@ function InitialLayout() {
     </Stack>
   );
 }
-
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
 
@@ -71,7 +76,7 @@ export default function RootLayout() {
       await inicializarBanco();
       setDbReady(true);
     };
-    
+
     prepararBanco();
   }, []);
 
