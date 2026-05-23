@@ -17,6 +17,11 @@ import { Subject } from "@/types/Subject";
 import { supabase } from "@/utils/supabase";
 
 const ordemDias: Record<string, number> = {
+  "segunda": 1,
+  "terca": 2,
+  "quarta": 3,
+  "quinta": 4,
+  "sexta": 5,
   "Segunda-feira": 1,
   "Terça-feira": 2,
   "Quarta-feira": 3,
@@ -42,7 +47,8 @@ interface SubjectContextData {
   addSubjects: (subjects: Subject[]) => Promise<void>;
   removeSubject: (id: string) => Promise<void>;
   updateUserName: (name: string) => Promise<void>;
-  removeSubjectGroup: (baseId: string) => Promise<void>;
+  removeSubjectGroup: (subjectId: string) => Promise<void>;
+  syncGrade: () => Promise<void>;
 }
 
 const SubjectContext = createContext<SubjectContextData>(
@@ -57,8 +63,9 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     const carregarDadosIniciais = async () => {
       await inicializarBanco();
 
-      const dadosDoBanco = await buscarDisciplinasDB();
-      const formatados = (dadosDoBanco as any[]).map((d) => ({
+      const dadosDoBanco = (await buscarDisciplinasDB()) as any[];
+      
+      const formatados = dadosDoBanco.map((d) => ({
         id: d.id,
         subjectId: d.subject_id,
         name: d.nome,
@@ -77,6 +84,60 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 
     carregarDadosIniciais();
   }, []);
+
+  const syncGrade = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data: cloudData, error } = await supabase
+        .from('aluno_disciplinas')
+        .select(`
+          disciplinas (
+            id, nome, professor, local,
+            horarios_disciplina ( id, dia_semana, hora_inicio, hora_fim )
+          )
+        `)
+        .eq('aluno_id', user.id);
+
+      if (error) throw error;
+
+      const gradeSincronizada: Subject[] = [];
+      cloudData.forEach((item: any) => {
+        const d = item.disciplinas;
+        if (d && d.horarios_disciplina) {
+          d.horarios_disciplina.forEach((h: any) => {
+            gradeSincronizada.push({
+              id: h.id,
+              subjectId: d.id,
+              name: d.nome,
+              prof: d.professor,
+              schedule: h.dia_semana,
+              timeStart: h.hora_inicio.substring(0, 5),
+              timeEnd: h.hora_fim.substring(0, 5),
+              location: d.local
+            });
+          });
+        }
+      });
+      const atuaisNoSQLite = (await buscarDisciplinasDB()) as any[];
+      
+      for (const s of atuaisNoSQLite) {
+        await removerDisciplinaDB(s.id);
+      }
+
+      for (const s of gradeSincronizada) {
+        await salvarDisciplinaDB(s);
+      }
+
+      setMySubjects(ordenar(gradeSincronizada));
+      console.log("Sincronização concluída com sucesso!");
+
+    } catch (error) {
+      console.error("Erro ao sincronizar:", error);
+      throw error;
+    }
+  };
 
   const addSubjects = async (newSubjects: Subject[]) => {
     try {
@@ -104,27 +165,27 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const removeSubjectGroup = async (subjectId: string) => {
-  try {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      await supabase
-        .from('aluno_disciplinas')
-        .delete()
-        .match({ aluno_id: user.id, disciplina_id: subjectId });
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        await supabase
+          .from('aluno_disciplinas')
+          .delete()
+          .match({ aluno_id: user.id, disciplina_id: subjectId });
+      }
+
+      const slotsParaRemover = mySubjects.filter(s => s.subjectId === subjectId);
+      
+      for (const slot of slotsParaRemover) {
+        await removerDisciplinaDB(slot.id);
+      }
+
+      setMySubjects(prev => prev.filter(s => s.subjectId !== subjectId));
+
+    } catch (error) {
+      console.error("Erro ao remover grupo:", error);
     }
-
-    const slotsParaRemover = mySubjects.filter(s => s.subjectId === subjectId);
-    
-    for (const slot of slotsParaRemover) {
-      await removerDisciplinaDB(slot.id);
-    }
-
-    setMySubjects(prev => prev.filter(s => s.subjectId !== subjectId));
-
-  } catch (error) {
-    console.error("Erro ao remover grupo:", error);
-  }
-};
+  };
 
   const updateUserName = async (newName: string) => {
     try {
@@ -144,6 +205,7 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         removeSubject,
         removeSubjectGroup,
         updateUserName,
+        syncGrade,
       }}
     >
       {children}
@@ -152,5 +214,4 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useSubjects = () => useContext(SubjectContext);
-
 export { Subject };
