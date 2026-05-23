@@ -28,6 +28,7 @@ export const authService = {
         id: data.user.id,
         full_name: nome, // Certifique-se que o banco espera 'full_name'
         matricula: matricula,
+         email: email,
         role: 'student',
         is_approved: false
       });
