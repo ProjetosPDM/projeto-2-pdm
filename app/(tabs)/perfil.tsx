@@ -24,8 +24,7 @@ import {
   Check,
   Sun,
   Moon,
-  Smartphone,
-  AlertCircle
+  Smartphone
 } from 'lucide-react-native';
 
 import { useSubjects } from '../../context/SubjectContext';
@@ -36,11 +35,12 @@ import { supabase } from '@/utils/supabase';
 export default function PerfilScreen() {
   const { colors, isDark, themeMode, setThemeMode } = useTheme(); 
   const { profile, signOut, refreshProfile } = useAuth(); 
-  const { updateUserName } = useSubjects(); 
+  const { updateUserName, syncGrade } = useSubjects(); 
 
   const [estaEditando, setEstaEditando] = useState(false);
   const [nomeTemp, setNomeTemp] = useState('');
   const [salvandoNome, setSalvandoNome] = useState(false);
+  const [sincronizando, setSincronizando] = useState(false); 
   
   const [modalTemaVisivel, setModalTemaVisivel] = useState(false);
 
@@ -58,16 +58,13 @@ export default function PerfilScreen() {
 
     try {
       setSalvandoNome(true);
-      
       const { error } = await supabase
         .from('profiles')
         .update({ full_name: nomeTemp.trim() })
         .eq('id', profile?.id);
 
       if (error) throw error;
-
       await updateUserName(nomeTemp.trim());
-
       if (refreshProfile) await refreshProfile();
 
       setEstaEditando(false);
@@ -76,6 +73,18 @@ export default function PerfilScreen() {
       Alert.alert("Erro ao salvar", error.message);
     } finally {
       setSalvandoNome(false);
+    }
+  };
+
+  const handleSincronizar = async () => {
+    try {
+      setSincronizando(true);
+      await syncGrade(); 
+      Alert.alert("Sucesso", "Sua grade foi sincronizada com a nuvem e está disponível offline!");
+    } catch (error) {
+      Alert.alert("Erro", "Verifique sua conexão para sincronizar os dados.");
+    } finally {
+      setSincronizando(false);
     }
   };
 
@@ -176,11 +185,22 @@ export default function PerfilScreen() {
           </View>
 
           <View style={styles.actionsContainer}>
-            <TouchableOpacity style={styles.actionButton} activeOpacity={0.7}>
+            <TouchableOpacity 
+              style={styles.actionButton} 
+              activeOpacity={0.7}
+              onPress={handleSincronizar}
+              disabled={sincronizando}
+            >
               <View style={styles.actionIcon}>
-                <RefreshCw size={20} color={colors.textMain} />
+                {sincronizando ? (
+                  <ActivityIndicator size="small" color={colors.primary} />
+                ) : (
+                  <RefreshCw size={20} color={colors.textMain} />
+                )}
               </View>
-              <Text style={styles.actionText}>Sincronizar Grade (Offline)</Text>
+              <Text style={styles.actionText}>
+                {sincronizando ? "Sincronizando..." : "Sincronizar Grade (Offline)"}
+              </Text>
               <ChevronRight size={20} color={colors.textMuted} />
             </TouchableOpacity>
 
