@@ -14,6 +14,7 @@ import {
   atualizarNomeUsuarioDB,
 } from "../utils/database";
 import { Subject } from "@/types/Subject";
+import { supabase } from "@/utils/supabase";
 
 const ordemDias: Record<string, number> = {
   "Segunda-feira": 1,
@@ -59,6 +60,7 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
       const dadosDoBanco = await buscarDisciplinasDB();
       const formatados = (dadosDoBanco as any[]).map((d) => ({
         id: d.id,
+        subjectId: d.subject_id,
         name: d.nome,
         prof: d.professor,
         schedule: d.diaSemana,
@@ -101,23 +103,28 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const removeSubjectGroup = async (baseId: string) => {
-    try {
-      const idsParaRemover = mySubjects
-        .filter((s) => s.id.replace(/[a-z]/g, "") === baseId)
-        .map((s) => s.id);
-
-      for (const id of idsParaRemover) {
-        await removerDisciplinaDB(id);
-      }
-
-      setMySubjects((prev) => 
-        ordenar(prev.filter((s) => !idsParaRemover.includes(s.id)))
-      );
-    } catch (error) {
-      console.error("Erro ao remover grupo de disciplinas do banco:", error);
+  const removeSubjectGroup = async (subjectId: string) => {
+  try {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      await supabase
+        .from('aluno_disciplinas')
+        .delete()
+        .match({ aluno_id: user.id, disciplina_id: subjectId });
     }
-  };
+
+    const slotsParaRemover = mySubjects.filter(s => s.subjectId === subjectId);
+    
+    for (const slot of slotsParaRemover) {
+      await removerDisciplinaDB(slot.id);
+    }
+
+    setMySubjects(prev => prev.filter(s => s.subjectId !== subjectId));
+
+  } catch (error) {
+    console.error("Erro ao remover grupo:", error);
+  }
+};
 
   const updateUserName = async (newName: string) => {
     try {
@@ -145,3 +152,5 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 };
 
 export const useSubjects = () => useContext(SubjectContext);
+
+export { Subject };

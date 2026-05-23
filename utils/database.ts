@@ -1,11 +1,7 @@
 import * as SQLite from 'expo-sqlite';
 
-// Abre a conexão com o banco de dados
 const db = SQLite.openDatabaseSync('ifpb_horario.db');
 
-/**
- * Inicializa o banco de dados criando as tabelas necessárias
- */
 export const inicializarBanco = async () => {
   try {
     await db.execAsync(`
@@ -14,6 +10,7 @@ export const inicializarBanco = async () => {
       -- Tabela para armazenar as disciplinas da grade
       CREATE TABLE IF NOT EXISTS disciplinas (
         id TEXT PRIMARY KEY NOT NULL,
+        subject_id TEXT NOT NULL, -- Coluna nova para identificar a matéria pai
         nome TEXT NOT NULL,
         professor TEXT NOT NULL,
         diaSemana TEXT NOT NULL,
@@ -28,11 +25,13 @@ export const inicializarBanco = async () => {
         valor TEXT
       );
 
+      -- Cache de sessão para funcionamento offline
       CREATE TABLE IF NOT EXISTS session_cache (
         id TEXT PRIMARY KEY,
         data TEXT NOT NULL
       );
 
+      -- Metadados de sincronização
       CREATE TABLE IF NOT EXISTS sync_meta (
         chave TEXT PRIMARY KEY,
         last_sync TEXT NOT NULL
@@ -76,14 +75,10 @@ export const limparCacheSessaoDB = async () => {
 };
 
 
-/**
- * Funções para Gerenciamento de Disciplinas
- */
-
 export const salvarDisciplinaDB = async (d: any) => {
   return await db.runAsync(
-    'INSERT OR REPLACE INTO disciplinas (id, nome, professor, diaSemana, horaInicio, horaFim, local) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [d.id, d.name, d.prof, d.schedule, d.timeStart, d.timeEnd, d.location]
+    'INSERT OR REPLACE INTO disciplinas (id, subject_id, nome, professor, diaSemana, horaInicio, horaFim, local) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+    [d.id, d.subjectId, d.name, d.prof, d.schedule, d.timeStart, d.timeEnd, d.location]
   );
 };
 
@@ -94,10 +89,6 @@ export const buscarDisciplinasDB = async () => {
 export const removerDisciplinaDB = async (id: string) => {
   return await db.runAsync('DELETE FROM disciplinas WHERE id = ?', [id]);
 };
-
-/**
- * Funções para Gerenciamento de Configurações (Perfil e Tema)
- */
 
 export const atualizarNomeUsuarioDB = async (nome: string) => {
   try {
@@ -122,6 +113,7 @@ export const buscarNomeUsuarioDB = async () => {
     return "Usuário";
   }
 };
+
 export const salvarTemaDB = async (tema: 'light' | 'dark' | 'system') => {
   try {
     return await db.runAsync(
@@ -139,7 +131,6 @@ export const buscarTemaDB = async () => {
       'SELECT valor FROM config WHERE chave = ?', 
       ['tema_app']
     );
-    // Se não houver nada salvo, o padrão é seguir o sistema do celular
     return resultado ? (resultado as any).valor : 'system';
   } catch (error) {
     console.error("Erro ao buscar tema no banco:", error);
