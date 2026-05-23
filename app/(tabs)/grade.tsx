@@ -21,10 +21,7 @@ export default function GradeScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const { mySubjects, removeSubjectGroup } = useSubjects();
-
-  const confirmarRemocao = (id: string, nome: string) => {
-    const baseId = id.replace(/[a-z]/g, '');
-
+  const confirmarRemocao = (subjectId: string, nome: string) => {
     Alert.alert(
       "Remover Disciplina",
       `Tem certeza que deseja remover "${nome}" e todos os seus horários da grade?`,
@@ -33,7 +30,7 @@ export default function GradeScreen() {
         {
           text: "Remover",
           style: "destructive",
-          onPress: () => removeSubjectGroup(baseId),
+          onPress: () => removeSubjectGroup(subjectId), 
         },
       ],
     );
@@ -82,7 +79,7 @@ export default function GradeScreen() {
                 <ScheduleCard
                   key={subject.id}
                   subject={subject}
-                  onDelete={() => confirmarRemocao(subject.id, subject.name)}
+                  onDelete={() => confirmarRemocao(subject.subjectId, subject.name)}
                 />
               ))}
             </View>
@@ -126,83 +123,5 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   listContainer: {
     gap: 12,
-  },
-  scheduleCard: {
-    backgroundColor: colors.card,
-    borderRadius: 24,
-    padding: 18,
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  timeTag: {
-    alignItems: "center",
-    paddingRight: 18,
-    borderRightWidth: 1,
-    borderRightColor: colors.border,
-    width: 65,
-  },
-  timeStart: {
-    fontSize: 15,
-    fontWeight: "800",
-    color: colors.textMain,
-  },
-  timeEnd: {
-    fontSize: 11,
-    color: colors.textMuted,
-    fontWeight: "700",
-  },
-  cardInfo: {
-    flex: 1,
-    paddingLeft: 18,
-  },
-  subjectText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: colors.textMain,
-    marginBottom: 4,
-  },
-  detailsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginBottom: 8,
-  },
-  profText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    fontWeight: "500",
-  },
-  dot: {
-    width: 3,
-    height: 3,
-    borderRadius: 1.5,
-    backgroundColor: colors.textMuted,
-    marginHorizontal: 6,
-  },
-  locationText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    fontWeight: "500",
-  },
-  dayTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: colors.softGreen,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    alignSelf: "flex-start",
-  },
-  dayText: {
-    fontSize: 11,
-    color: colors.accent,
-    fontWeight: "700",
-  },
-  deleteButton: {
-    padding: 8,
-    marginLeft: 4,
-    justifyContent: "center",
-    alignItems: "center",
   },
 });
