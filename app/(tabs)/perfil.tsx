@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   View, 
   Text, 
@@ -7,10 +7,10 @@ import {
   TextInput, 
   Alert, 
   StatusBar, 
-  BackHandler, 
   Platform,
   Modal,
-  Pressable
+  Pressable,
+  ActivityIndicator
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { 
@@ -24,36 +24,63 @@ import {
   Check,
   Sun,
   Moon,
-  Smartphone
+  Smartphone,
+  AlertCircle
 } from 'lucide-react-native';
 
 import { useSubjects } from '../../context/SubjectContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuth } from '../../context/AuthContext';
+import { supabase } from '@/utils/supabase'; 
 
 export default function PerfilScreen() {
   const { colors, isDark, themeMode, setThemeMode } = useTheme(); 
-  const { userName, updateUserName } = useSubjects();
-  const { signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth(); 
+  const { updateUserName } = useSubjects(); 
 
   const [estaEditando, setEstaEditando] = useState(false);
-  const [nomeTemp, setNomeTemp] = useState(userName);
+  const [nomeTemp, setNomeTemp] = useState('');
+  const [salvandoNome, setSalvandoNome] = useState(false);
   
   const [modalTemaVisivel, setModalTemaVisivel] = useState(false);
-  
-  const isApproved = true; 
+
+  useEffect(() => {
+    if (profile?.full_name) {
+      setNomeTemp(profile.full_name);
+    }
+  }, [profile]);
 
   const handleSalvarNome = async () => {
     if (nomeTemp.trim().length < 3) {
       Alert.alert("Erro", "O nome deve ter pelo menos 3 caracteres.");
       return;
     }
-    await updateUserName(nomeTemp);
-    setEstaEditando(false);
+
+    try {
+      setSalvandoNome(true);
+      
+      const { error } = await supabase
+        .from('profiles')
+        .update({ full_name: nomeTemp.trim() })
+        .eq('id', profile?.id);
+
+      if (error) throw error;
+
+      await updateUserName(nomeTemp.trim());
+
+      if (refreshProfile) await refreshProfile();
+
+      setEstaEditando(false);
+      Alert.alert("Sucesso", "Nome atualizado com sucesso!");
+    } catch (error: any) {
+      Alert.alert("Erro ao salvar", error.message);
+    } finally {
+      setSalvandoNome(false);
+    }
   };
 
   const handleSair = () => {
-    Alert.alert("Sair", "Deseja realmente deslogar?", [
+    Alert.alert("Sair", "Deseja realmente deslogar do aplicativo?", [
           { text: "Cancelar", style: "cancel" },
           { text: "Sair", style: "destructive", onPress: signOut }
         ]);
@@ -65,6 +92,14 @@ export default function PerfilScreen() {
   };
 
   const styles = createStyles(colors);
+
+  if (!profile) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+      </View>
+    );
+  }
 
   return (
     <SafeAreaProvider>
@@ -81,7 +116,7 @@ export default function PerfilScreen() {
           <View style={styles.profileCard}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
-                {userName.charAt(0).toUpperCase()}
+                {profile.full_name?.charAt(0).toUpperCase() || 'U'}
               </Text>
             </View>
             
@@ -95,31 +130,47 @@ export default function PerfilScreen() {
                     autoFocus
                     placeholder="Seu nome"
                     placeholderTextColor={colors.textMuted}
+                    editable={!salvandoNome}
                   />
-                  <TouchableOpacity onPress={handleSalvarNome} style={styles.saveBtn}>
-                    <Check size={20} color="#FFFFFF" strokeWidth={3} />
+                  <TouchableOpacity 
+                    onPress={handleSalvarNome} 
+                    style={[styles.saveBtn, salvandoNome && { opacity: 0.5 }]}
+                    disabled={salvandoNome}
+                  >
+                    {salvandoNome ? (
+                      <ActivityIndicator size="small" color="#FFF" />
+                    ) : (
+                      <Check size={20} color="#FFFFFF" strokeWidth={3} />
+                    )}
                   </TouchableOpacity>
                 </View>
               ) : (
                 <TouchableOpacity 
                   style={styles.nameRow} 
-                  onPress={() => {
-                    setNomeTemp(userName);
-                    setEstaEditando(true);
-                  }}
+                  onPress={() => setEstaEditando(true)}
                 >
-                  <Text style={styles.name}>{userName}</Text>
+                  <Text style={styles.name}>{profile.full_name}</Text>
                   <Pencil size={16} color={colors.textMuted} />
                 </TouchableOpacity>
               )}
             </View>
 
-            <Text style={styles.registration}>Matrícula: 2024100123</Text>
+            <Text style={styles.registration}>Matrícula: {profile.matricula || 'Não informada'}</Text>
             
-            <View style={[styles.statusBadge, isApproved ? styles.statusApproved : styles.statusPending]}>
-              {isApproved ? <CheckCircle2 size={14} color={colors.primary} /> : <Clock size={14} color="#B45309" />}
-              <Text style={[styles.statusText, isApproved ? { color: colors.primary } : { color: "#B45309" }]}>
-                {isApproved ? 'Conta Aprovada' : 'Aprovação Pendente'}
+            <View style={[
+              styles.statusBadge, 
+              profile.is_approved ? styles.statusApproved : styles.statusPending
+            ]}>
+              {profile.is_approved ? (
+                <CheckCircle2 size={14} color={colors.primary} />
+              ) : (
+                <Clock size={14} color="#B45309" />
+              )}
+              <Text style={[
+                styles.statusText, 
+                { color: profile.is_approved ? colors.primary : "#B45309" }
+              ]}>
+                {profile.is_approved ? 'Conta Aprovada' : 'Aprovação Pendente'}
               </Text>
             </View>
           </View>
@@ -155,7 +206,7 @@ export default function PerfilScreen() {
               activeOpacity={0.7}
               onPress={handleSair}
             >
-              <View style={[styles.actionIcon, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : colors.dangerLight }]}>
+              <View style={[styles.actionIcon, { backgroundColor: isDark ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)' }]}>
                 <LogOut size={20} color={colors.danger} />
               </View>
               <Text style={[styles.actionText, { color: colors.danger }]}>Sair do Aplicativo</Text>
@@ -171,7 +222,6 @@ export default function PerfilScreen() {
         >
           <View style={styles.modalOverlay}>
             <Pressable style={styles.modalBackdrop} onPress={() => setModalTemaVisivel(false)} />
-            
             <View style={styles.modalContent}>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Escolher Aparência</Text>
@@ -219,7 +269,6 @@ export default function PerfilScreen() {
             </View>
           </View>
         </Modal>
-
       </View>
     </SafeAreaProvider>
   );
@@ -252,8 +301,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   nameContainer: { marginBottom: 4, width: '100%', alignItems: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   name: { fontSize: 22, fontWeight: '800', color: colors.textMain },
-  editRow: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '90%' },
-  input: { flex: 1, fontSize: 20, fontWeight: '700', color: colors.textMain, borderBottomWidth: 2, borderBottomColor: colors.accent, paddingVertical: 2 },
+  editRow: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' },
+  input: { flex: 1, maxWidth: '70%', fontSize: 20, fontWeight: '700', color: colors.textMain, borderBottomWidth: 2, borderBottomColor: colors.accent, paddingVertical: 2 },
   saveBtn: { backgroundColor: colors.accent, width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
 
   registration: { fontSize: 14, color: colors.textMuted, fontWeight: '500', marginBottom: 16 },
@@ -275,66 +324,15 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   actionIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   actionText: { fontSize: 15, fontWeight: '700', color: colors.textMain, flex: 1 },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  modalBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  modalContent: {
-    backgroundColor: colors.card,
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 10,
-    elevation: 20,
-  },
-  modalHeader: {
-    marginBottom: 20,
-    alignItems: 'center',
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: colors.textMain,
-  },
-  themeOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 16,
-    marginBottom: 8,
-    backgroundColor: colors.background,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  themeOptionSelected: {
-    backgroundColor: colors.softGreen,
-    borderColor: colors.accent,
-  },
-  themeOptionText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: colors.textMain,
-    marginLeft: 16,
-  },
-  modalCancelButton: {
-    marginTop: 16,
-    padding: 16,
-    alignItems: 'center',
-    borderRadius: 16,
-    backgroundColor: colors.background,
-  },
-  modalCancelText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: colors.textMuted,
-  },
+  
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+  modalBackdrop: { ...StyleSheet.absoluteFillObject },
+  modalContent: { backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 20 },
+  modalHeader: { marginBottom: 20, alignItems: 'center' },
+  modalTitle: { fontSize: 20, fontWeight: '800', color: colors.textMain },
+  themeOption: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, marginBottom: 8, backgroundColor: colors.background, borderWidth: 1, borderColor: 'transparent' },
+  themeOptionSelected: { backgroundColor: colors.softGreen, borderColor: colors.accent },
+  themeOptionText: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.textMain, marginLeft: 16 },
+  modalCancelButton: { marginTop: 16, padding: 16, alignItems: 'center', borderRadius: 16, backgroundColor: colors.background },
+  modalCancelText: { fontSize: 16, fontWeight: '700', color: colors.textMuted },
 });
