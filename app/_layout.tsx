@@ -21,6 +21,7 @@ function InitialLayout() {
     const inAuthGroup = firstSegment === "(auth)";
     const inAdminGroup = firstSegment === "(admin)";
     const inTabsGroup = firstSegment === "(tabs)";
+    const inSearchModal = firstSegment === "search-subjects"; 
 
     if (!session) {
       if (!inAuthGroup) {
@@ -40,7 +41,7 @@ function InitialLayout() {
             router.replace("/(admin)");
           }
         } else {
-          if (!inTabsGroup) {
+          if (!inTabsGroup && !inSearchModal) {
             router.replace("/(tabs)");
           }
         }
@@ -68,6 +69,7 @@ function InitialLayout() {
     </Stack>
   );
 }
+
 export default function RootLayout() {
   const [dbReady, setDbReady] = useState(false);
 
