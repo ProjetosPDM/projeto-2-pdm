@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       const { data } = await authService.getProfile(userId);
       if (data) {
         const profileWithEmail: UserProfile = {
-        ...data,
-        email: userEmail
-      };
+          ...data,
+          email: userEmail
+        };
         setProfile(profileWithEmail);
         await salvarPerfilOfflineDB(profileWithEmail);
       }
@@ -42,7 +42,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setIsLoading(false);
     }
   };
-   const refreshProfile = async () => {
+
+  const refreshProfile = async () => {
     if (!session?.user.id) return;
     
     const { data, error } = await supabase
@@ -52,28 +53,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       .single();
 
     if (!error && data) {
-      setProfile(data); 
+      const profileWithEmail: UserProfile = {
+        ...data,
+        email: session.user.email!
+      };
+      setProfile(profileWithEmail); 
     }
   };
  
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        carregarPerfil(session.user.id,session.user.email!);
-      } else {
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      if (error) {
+        console.error("Erro de Sessão (Token Inválido):", error.message);
+        await limparCacheSessaoDB();
+        setSession(null);
+        setUser(null);
+        setProfile(null);
         setIsLoading(false);
+        return;
       }
-    });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
         carregarPerfil(session.user.id, session.user.email!);
       } else {
+        setIsLoading(false);
+      }
+    });
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      
+      if (event === 'SIGNED_OUT') {
+        await limparCacheSessaoDB();
         setProfile(null);
+      }
+
+      setSession(session);
+      setUser(session?.user ?? null);
+      
+      if (session?.user && event !== 'SIGNED_OUT') {
+        carregarPerfil(session.user.id, session.user.email!);
+      } else {
+        setProfile(null);
+        setIsLoading(false);
       }
     });
 
