@@ -10,12 +10,12 @@ import {
   Platform,
   Modal,
   Pressable,
-  ActivityIndicator
+  ActivityIndicator,
+  ScrollView
 } from 'react-native';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { 
   Settings, 
-  RefreshCw, 
   LogOut, 
   CheckCircle2, 
   Clock, 
@@ -35,12 +35,11 @@ import { supabase } from '@/utils/supabase';
 export default function PerfilScreen() {
   const { colors, isDark, themeMode, setThemeMode } = useTheme(); 
   const { profile, signOut, refreshProfile } = useAuth(); 
-  const { updateUserName, syncGrade } = useSubjects(); 
+  const { updateUserName } = useSubjects(); // syncGrade removido daqui
 
   const [estaEditando, setEstaEditando] = useState(false);
   const [nomeTemp, setNomeTemp] = useState('');
   const [salvandoNome, setSalvandoNome] = useState(false);
-  const [sincronizando, setSincronizando] = useState(false); 
   
   const [modalTemaVisivel, setModalTemaVisivel] = useState(false);
 
@@ -73,18 +72,6 @@ export default function PerfilScreen() {
       Alert.alert("Erro ao salvar", error.message);
     } finally {
       setSalvandoNome(false);
-    }
-  };
-
-  const handleSincronizar = async () => {
-    try {
-      setSincronizando(true);
-      await syncGrade(); 
-      Alert.alert("Sucesso", "Sua grade foi sincronizada com a nuvem e está disponível offline!");
-    } catch (error) {
-      Alert.alert("Erro", "Verifique sua conexão para sincronizar os dados.");
-    } finally {
-      setSincronizando(false);
     }
   };
 
@@ -121,7 +108,10 @@ export default function PerfilScreen() {
           </View>
         </SafeAreaView>
 
-        <View style={styles.content}>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={styles.scrollContent}
+        >
           <View style={styles.profileCard}>
             <View style={styles.avatar}>
               <Text style={styles.avatarText}>
@@ -188,25 +178,6 @@ export default function PerfilScreen() {
             <TouchableOpacity 
               style={styles.actionButton} 
               activeOpacity={0.7}
-              onPress={handleSincronizar}
-              disabled={sincronizando}
-            >
-              <View style={styles.actionIcon}>
-                {sincronizando ? (
-                  <ActivityIndicator size="small" color={colors.primary} />
-                ) : (
-                  <RefreshCw size={20} color={colors.textMain} />
-                )}
-              </View>
-              <Text style={styles.actionText}>
-                {sincronizando ? "Sincronizando..." : "Sincronizar Grade (Offline)"}
-              </Text>
-              <ChevronRight size={20} color={colors.textMuted} />
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-              style={styles.actionButton} 
-              activeOpacity={0.7}
               onPress={() => setModalTemaVisivel(true)}
             >
               <View style={styles.actionIcon}>
@@ -232,7 +203,7 @@ export default function PerfilScreen() {
               <Text style={[styles.actionText, { color: colors.danger }]}>Sair do Aplicativo</Text>
             </TouchableOpacity>
           </View>
-        </View>
+        </ScrollView>
 
         <Modal
           visible={modalTemaVisivel}
@@ -299,8 +270,7 @@ const createStyles = (colors: any) => StyleSheet.create({
   safeHeader: { backgroundColor: colors.background },
   header: { paddingHorizontal: 24, paddingVertical: 10, marginBottom: 10 },
   title: { fontSize: 28, fontWeight: "800", color: colors.textMain, letterSpacing: -0.5 },
-  content: { paddingHorizontal: 24, flex: 1 },
-  
+  scrollContent: { paddingHorizontal: 24, paddingBottom: 120 },
   profileCard: { 
     alignItems: 'center', 
     backgroundColor: colors.card, 
@@ -317,21 +287,17 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: colors.primary, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
   avatarText: { fontSize: 32, fontWeight: '800', color: "#FFFFFF" },
-  
   nameContainer: { marginBottom: 4, width: '100%', alignItems: 'center' },
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   name: { fontSize: 22, fontWeight: '800', color: colors.textMain },
-  editRow: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '100%', justifyContent: 'center' },
-  input: { flex: 1, maxWidth: '70%', fontSize: 20, fontWeight: '700', color: colors.textMain, borderBottomWidth: 2, borderBottomColor: colors.accent, paddingVertical: 2 },
+  editRow: { flexDirection: 'row', alignItems: 'center', gap: 10, width: '90%' },
+  input: { flex: 1, fontSize: 20, fontWeight: '700', color: colors.textMain, borderBottomWidth: 2, borderBottomColor: colors.accent, paddingVertical: 2 },
   saveBtn: { backgroundColor: colors.accent, width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-
   registration: { fontSize: 14, color: colors.textMuted, fontWeight: '500', marginBottom: 16 },
-  
   statusBadge: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, gap: 6 },
   statusApproved: { backgroundColor: colors.softGreen },
   statusPending: { backgroundColor: '#FEF3C7' },
   statusText: { fontSize: 13, fontWeight: '700' },
-
   actionsContainer: { gap: 12 },
   actionButton: { 
     flexDirection: 'row', 
@@ -344,15 +310,66 @@ const createStyles = (colors: any) => StyleSheet.create({
   },
   actionIcon: { width: 40, height: 40, borderRadius: 12, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   actionText: { fontSize: 15, fontWeight: '700', color: colors.textMain, flex: 1 },
-  
-  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0, 0, 0, 0.4)' },
-  modalBackdrop: { ...StyleSheet.absoluteFillObject },
-  modalContent: { backgroundColor: colors.card, borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: Platform.OS === 'ios' ? 40 : 24, shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.1, shadowRadius: 10, elevation: 20 },
-  modalHeader: { marginBottom: 20, alignItems: 'center' },
-  modalTitle: { fontSize: 20, fontWeight: '800', color: colors.textMain },
-  themeOption: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, marginBottom: 8, backgroundColor: colors.background, borderWidth: 1, borderColor: 'transparent' },
-  themeOptionSelected: { backgroundColor: colors.softGreen, borderColor: colors.accent },
-  themeOptionText: { flex: 1, fontSize: 16, fontWeight: '600', color: colors.textMain, marginLeft: 16 },
-  modalCancelButton: { marginTop: 16, padding: 16, alignItems: 'center', borderRadius: 16, backgroundColor: colors.background },
-  modalCancelText: { fontSize: 16, fontWeight: '700', color: colors.textMuted },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.4)',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 10,
+    elevation: 20,
+  },
+  modalHeader: {
+    marginBottom: 20,
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.textMain,
+  },
+  themeOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderRadius: 16,
+    marginBottom: 8,
+    backgroundColor: colors.background,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  themeOptionSelected: {
+    backgroundColor: colors.softGreen,
+    borderColor: colors.accent,
+  },
+  themeOptionText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '600',
+    color: colors.textMain,
+    marginLeft: 16,
+  },
+  modalCancelButton: {
+    marginTop: 16,
+    padding: 16,
+    alignItems: 'center',
+    borderRadius: 16,
+    backgroundColor: colors.background,
+  },
+  modalCancelText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
 });
