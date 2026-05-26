@@ -81,13 +81,14 @@ export default function SearchSubjects() {
       }));
 
       setDbSubjects(formattedData);
-      
-      cloudInitialIdsRef.current = cloudData.map(m => m.disciplina_id);
+      cloudInitialIdsRef.current = cloudData.map((m: any) => m.disciplina_id);
 
       const idsLocalmenteAtivos = Array.from(
-        new Set(mySubjects.map((s) => s.id.replace(/[a-z]/g, '')))
+        new Set(mySubjects.filter(s => s.subjectId).map((s) => s.subjectId))
       );
-      setSelectedIds(idsLocalmenteAtivos);
+      
+      const idsConsolidados = Array.from(new Set([...cloudInitialIdsRef.current, ...idsLocalmenteAtivos]));
+      setSelectedIds(idsConsolidados);
 
     } catch (error) {
       console.error("Erro na busca da API:", error);
@@ -178,11 +179,13 @@ export default function SearchSubjects() {
         await addSubjects(toAddFlat);
       }
 
-      const idsLocalmentePresentes = Array.from(new Set(mySubjects.map((s) => s.id.replace(/[a-z]/g, ''))));
+      const idsLocalmentePresentes = Array.from(new Set(mySubjects.filter(s => s.subjectId).map((s) => s.subjectId)));
       const toRemoveLocal = idsLocalmentePresentes.filter(id => !selectedIds.includes(id));
 
       for (const subjectId of toRemoveLocal) {
-        await removeSubjectGroup(subjectId);
+        if (subjectId) {
+          await removeSubjectGroup(subjectId);
+        }
       }
 
       router.back();
@@ -224,13 +227,13 @@ export default function SearchSubjects() {
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.statusText, { color: colors.textMuted }]}>Buscando disciplinas na nuvem...</Text>
+          <Text style={[styles.statusText, { color: colors.textMuted }]}>Buscando disciplinas...</Text>
         </View>
       ) : isOffline ? (
         <View style={styles.centerContainer}>
           <WifiOff size={48} color={colors.danger} opacity={0.8} />
           <Text style={[styles.statusText, { color: colors.textMain, fontWeight: '700', marginTop: 12 }]}>Você está offline</Text>
-          <Text style={[styles.statusText, { color: colors.textMuted, textAlign: 'center', marginHorizontal: 30 }]}>Não foi possível carregar as disciplinas.</Text>
+          <Text style={[styles.statusText, { color: colors.textMuted, textAlign: 'center', marginHorizontal: 30 }]}>Não foi possível carregar o catálogo de disciplinas.</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadData}>
             <Text style={styles.retryText}>Tentar Novamente</Text>
           </TouchableOpacity>
