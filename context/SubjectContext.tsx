@@ -60,9 +60,11 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
   const [userName, setUserName] = useState<string>("Estudante");
 
   useEffect(() => {
-    const carregarDadosIniciais = async () => {
-      await inicializarBanco();
+    let montado = true;
 
+    const inicializarAplicativo = async () => {
+      // 1. CARREGAMENTO OFFLINE-FIRST (Imediato)
+      await inicializarBanco();
       const dadosDoBanco = (await buscarDisciplinasDB()) as any[];
       
       const formatados = dadosDoBanco.map((d) => ({
@@ -76,21 +78,29 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         location: d.local,
       }));
 
-      setMySubjects(ordenar(formatados));
+      if (montado) {
+        setMySubjects(ordenar(formatados));
+        const nomeSalvo = await buscarNomeUsuarioDB();
+        if (nomeSalvo) setUserName(nomeSalvo);
+      }
 
-      const nomeSalvo = await buscarNomeUsuarioDB();
-      if (nomeSalvo) setUserName(nomeSalvo);
+      // 2. BACKGROUND SYNC (Atualiza a grade silenciosamente se houver internet)
+      await syncGrade();
     };
 
-    carregarDadosIniciais();
+    inicializarAplicativo();
+
+    return () => {
+      montado = false;
+    };
   }, []);
 
   const syncGrade = async () => {
     try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      if (authError || !user) return;
 
-      const { data: cloudData, error } = await supabase
+      const { data: cloudData, error: dbError } = await supabase
         .from('aluno_disciplinas')
         .select(`
           disciplinas (
@@ -100,7 +110,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         `)
         .eq('aluno_id', user.id);
 
-      if (error) throw error;
+      // Se falhar (ex: offline), encerra silenciosamente sem quebrar o app
+      if (dbError) return;
 
       const gradeSincronizada: Subject[] = [];
       cloudData.forEach((item: any) => {
@@ -120,6 +131,7 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
           });
         }
       });
+
       const atuaisNoSQLite = (await buscarDisciplinasDB()) as any[];
       
       for (const s of atuaisNoSQLite) {
@@ -131,11 +143,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setMySubjects(ordenar(gradeSincronizada));
-      console.log("Sincronização concluída com sucesso!");
-
-    } catch (error) {
-      console.error("Erro ao sincronizar:", error);
-      throw error;
+    } catch {
+      // Falha silenciosa para manter a fluidez do modo offline
     }
   };
 
@@ -150,8 +159,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
         const filteredNew = newSubjects.filter((s) => !existingIds.has(s.id));
         return ordenar([...prev, ...filteredNew]);
       });
-    } catch (error) {
-      console.error("Erro ao adicionar no banco:", error);
+    } catch {
+      // Ignorado
     }
   };
 
@@ -159,8 +168,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     try {
       await removerDisciplinaDB(id);
       setMySubjects((prev) => ordenar(prev.filter((s) => s.id !== id)));
-    } catch (error) {
-      console.error("Erro ao remover do banco:", error);
+    } catch {
+      // Ignorado
     }
   };
 
@@ -181,9 +190,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
       }
 
       setMySubjects(prev => prev.filter(s => s.subjectId !== subjectId));
-
-    } catch (error) {
-      console.error("Erro ao remover grupo:", error);
+    } catch {
+      // Ignorado
     }
   };
 
@@ -191,8 +199,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
     try {
       await atualizarNomeUsuarioDB(newName);
       setUserName(newName);
-    } catch (error) {
-      console.error("Erro ao atualizar nome:", error);
+    } catch {
+      // Ignorado
     }
   };
 
