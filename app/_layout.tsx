@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { View, ActivityIndicator } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
 
+import { SafeAreaProvider} from "react-native-safe-area-context";
+
 import { SubjectProvider } from "../context/SubjectContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { AuthProvider, useAuth } from "../context/AuthContext";
@@ -35,7 +37,6 @@ function InitialLayout() {
         }
       }
       else if (profile?.is_approved) {
-
         if (profile.role === 'admin') {
           if (!inAdminGroup) {
             router.replace("/(admin)");
@@ -51,22 +52,24 @@ function InitialLayout() {
 
   if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8FAFB" }}>
         <ActivityIndicator size="large" color="#10B981" />
       </View>
     );
   }
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="(admin)" />
-      <Stack.Screen
-        name="search-subjects"
-        options={{ presentation: "modal", animation: "slide_from_bottom" }}
-      />
-    </Stack>
+    <View style={{ flex: 1, backgroundColor: "#F8FAFB" }}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="(admin)" />
+        <Stack.Screen
+          name="search-subjects"
+          options={{ presentation: "modal", animation: "slide_from_bottom" }}
+        />
+      </Stack>
+    </View>
   );
 }
 
@@ -82,17 +85,21 @@ export default function RootLayout() {
     prepararBanco();
   }, []);
 
-  if (!dbReady) {
-    return null;
-  }
-
   return (
-    <ThemeProvider>
-      <AuthProvider>
-        <SubjectProvider>
-          <InitialLayout />
-        </SubjectProvider>
-      </AuthProvider>
-    </ThemeProvider>
+    <SafeAreaProvider>
+      <View style={{ flex: 1, backgroundColor: "#F8FAFB" }}>
+        <ThemeProvider>
+          <AuthProvider>
+            <SubjectProvider>
+              {!dbReady ? (
+                <View style={{ flex: 1, backgroundColor: "#F8FAFB" }} />
+              ) : (
+                <InitialLayout />
+              )}
+            </SubjectProvider>
+          </AuthProvider>
+        </ThemeProvider>
+      </View>
+    </SafeAreaProvider>
   );
 }

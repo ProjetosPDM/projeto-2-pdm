@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform, Dimensions
+} from "react-native";
 import { Link } from "expo-router";
 import { Mail, Lock } from "lucide-react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { authService } from "../../services/authService";
+
+const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export default function LoginScreen() {
 	const { colors } = useTheme();
@@ -22,61 +25,74 @@ export default function LoginScreen() {
 	};
 
 	return (
-		<View style={styles.container}>
-			<Text style={styles.title}>
-				Horário <Text style={{ color: colors.primary }}>IFPB</Text>
-			</Text>
-			<Text style={styles.subtitle}>Faça login para acessar sua grade</Text>
+		<KeyboardAvoidingView
+			style={{ flex: 1, backgroundColor: colors.background }}
+			behavior="padding"
 
-			<View style={styles.inputContainer}>
-				<Mail color={colors.textMuted} size={20} style={styles.icon} />
-				<TextInput
-					style={styles.input}
-					placeholder="E-mail Institucional"
-					placeholderTextColor={colors.textMuted}
-					autoCapitalize="none"
-					keyboardType="email-address"
-					value={email}
-					onChangeText={setEmail}
-				/>
-			</View>
+		>
+			<ScrollView
+				contentContainerStyle={styles.scrollContent}
+				keyboardShouldPersistTaps="handled"
+				showsVerticalScrollIndicator={false}
+				automaticallyAdjustKeyboardInsets={true}
+			>
+				<Text style={styles.title}>
+					Horário <Text style={{ color: colors.primary }}>IFPB</Text>
+				</Text>
+				<Text style={styles.subtitle}>Faça login para acessar sua grade</Text>
 
-			<View style={styles.inputContainer}>
-				<Lock color={colors.textMuted} size={20} style={styles.icon} />
-				<TextInput
-					style={styles.input}
-					placeholder="Senha"
-					placeholderTextColor={colors.textMuted}
-					secureTextEntry
-					value={password}
-					onChangeText={setPassword}
-				/>
-			</View>
+				<View style={styles.inputContainer}>
+					<Mail color={colors.textMuted} size={20} style={styles.icon} />
+					<TextInput
+						style={styles.input}
+						placeholder="E-mail Institucional"
+						placeholderTextColor={colors.textMuted}
+						autoCapitalize="none"
+						keyboardType="email-address"
+						value={email}
+						onChangeText={setEmail}
+					/>
+				</View>
 
-			<TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
-				{loading ?
-					<ActivityIndicator color="#fff" />
-				:	<Text style={styles.buttonText}>Entrar</Text>}
-			</TouchableOpacity>
+				<View style={styles.inputContainer}>
+					<Lock color={colors.textMuted} size={20} style={styles.icon} />
+					<TextInput
+						style={styles.input}
+						placeholder="Senha"
+						placeholderTextColor={colors.textMuted}
+						secureTextEntry
+						value={password}
+						onChangeText={setPassword}
+					/>
+				</View>
 
-			<Link href="/(auth)/register" asChild>
-				<TouchableOpacity style={styles.linkButton}>
-					<Text style={styles.linkText}>
-						Não tem conta? <Text style={styles.linkBold}>Cadastre-se</Text>
-					</Text>
+				<TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
+					{loading ?
+						<ActivityIndicator color="#fff" />
+					:	<Text style={styles.buttonText}>Entrar</Text>}
 				</TouchableOpacity>
-			</Link>
-		</View>
+
+				<Link href="/(auth)/register" asChild>
+					<TouchableOpacity style={styles.linkButton}>
+						<Text style={styles.linkText}>
+							Não tem conta? <Text style={styles.linkBold}>Cadastre-se</Text>
+						</Text>
+					</TouchableOpacity>
+				</Link>
+			</ScrollView>
+		</KeyboardAvoidingView>
 	);
 }
 
 const createStyles = (colors: any) =>
 	StyleSheet.create({
-		container: {
-			flex: 1,
+		scrollContent: {
+			flexGrow: 1,
 			justifyContent: "center",
 			padding: 24,
 			backgroundColor: colors.background,
+			minHeight: SCREEN_HEIGHT * 0.8,
+			paddingBottom: 40,
 		},
 		title: {
 			fontSize: 36,
