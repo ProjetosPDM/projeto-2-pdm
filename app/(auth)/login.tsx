@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform, Dimensions
 } from "react-native";
 import { Link } from "expo-router";
-import { Mail, Lock } from "lucide-react-native";
+import { Mail, Lock, Eye, EyeOff } from "lucide-react-native";
 import { useTheme } from "../../context/ThemeContext";
 import { authService } from "../../services/authService";
 
@@ -14,6 +14,7 @@ export default function LoginScreen() {
 
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
+	const [showPassword, setShowPassword] = useState(false);
 	const [loading, setLoading] = useState(false);
 
 	const handleLogin = async () => {
@@ -60,11 +61,22 @@ export default function LoginScreen() {
 						style={styles.input}
 						placeholder="Senha"
 						placeholderTextColor={colors.textMuted}
-						secureTextEntry
+						secureTextEntry={!showPassword}
 						value={password}
 						onChangeText={setPassword}
 					/>
-				</View>
+
+					<TouchableOpacity 
+						onPress={() => setShowPassword(!showPassword)}
+						style={styles.eyeIcon}
+					>
+						{showPassword ? (
+						<EyeOff color={colors.primary} size={20} />
+						) : (
+						<Eye color={colors.textMuted} size={20} />
+						)}
+					</TouchableOpacity>
+					</View>
 
 				<TouchableOpacity style={styles.button} onPress={handleLogin} disabled={loading} activeOpacity={0.8}>
 					{loading ?
@@ -150,4 +162,7 @@ const createStyles = (colors: any) =>
 			color: colors.primary,
 			fontWeight: "700",
 		},
+		 eyeIcon: {
+      padding: 8,
+    },
 	});

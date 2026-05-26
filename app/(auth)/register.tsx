@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text,  TextInput,  TouchableOpacity,  StyleSheet,  ActivityIndicator,  Alert,  ScrollView, Platform, KeyboardAvoidingView, Dimensions } from 'react-native';
 import { Link } from 'expo-router';
-import { User, Mail, Lock, Hash } from 'lucide-react-native';
+import { User, Mail, Lock, Hash , Eye, EyeOff} from 'lucide-react-native';
 import { useTheme } from '../../context/ThemeContext';
 import { authService } from '../../services/authService';
 
@@ -15,6 +15,7 @@ export default function RegisterScreen() {
   const [matricula, setMatricula] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
@@ -81,10 +82,20 @@ export default function RegisterScreen() {
             style={styles.input} 
             placeholder="Senha" 
             placeholderTextColor={colors.textMuted} 
-            secureTextEntry 
+            secureTextEntry={!showPassword}
             value={password} 
             onChangeText={setPassword} 
           />
+          <TouchableOpacity 
+            onPress={() => setShowPassword(!showPassword)}
+            style={styles.eyeIcon}
+          >
+            {showPassword ? (
+              <EyeOff color={colors.primary} size={20} />
+            ) : (
+              <Eye color={colors.textMuted} size={20} />
+            )}
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.button} onPress={handleRegister} disabled={loading} activeOpacity={0.8}>
@@ -128,5 +139,8 @@ const createStyles = (colors: any) => StyleSheet.create({
   buttonText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
   linkButton: { marginTop: 24, alignItems: 'center' },
   linkText: { color: colors.textMuted, fontSize: 14 },
-  linkBold: { color: colors.primary, fontWeight: '700' }
+  linkBold: { color: colors.primary, fontWeight: '700' },
+  eyeIcon: {
+    padding: 8,
+  },
 });
