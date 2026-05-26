@@ -15,6 +15,7 @@ import {
 } from "../utils/database";
 import { Subject } from "@/types/Subject";
 import { supabase } from "@/utils/supabase";
+import { useAuth } from "./AuthContext";
 
 const ordemDias: Record<string, number> = {
   "segunda": 1,
@@ -59,6 +60,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
   const [mySubjects, setMySubjects] = useState<Subject[]>([]);
   const [userName, setUserName] = useState<string>("Estudante");
 
+  const { session } = useAuth()
+
   useEffect(() => {
     let montado = true;
 
@@ -94,6 +97,15 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
       montado = false;
     };
   }, []);
+
+  useEffect(() => {
+    // Toda vez que o ID do usuário mudar (Login ou Logout)
+    if (session?.user) {
+      syncGrade();
+    } else {
+      setMySubjects([]);
+    }
+  }, [session?.user?.id]);
 
   const syncGrade = async () => {
     try {
