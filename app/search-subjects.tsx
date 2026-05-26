@@ -81,13 +81,14 @@ export default function SearchSubjects() {
       }));
 
       setDbSubjects(formattedData);
-      
-      cloudInitialIdsRef.current = cloudData.map(m => m.disciplina_id);
+      cloudInitialIdsRef.current = cloudData.map((m: any) => m.disciplina_id);
 
       const idsLocalmenteAtivos = Array.from(
-        new Set(mySubjects.map((s) => s.id.replace(/[a-z]/g, '')))
+        new Set(mySubjects.filter(s => s.subjectId).map((s) => s.subjectId))
       );
-      setSelectedIds(idsLocalmenteAtivos);
+      
+      const idsConsolidados = Array.from(new Set([...cloudInitialIdsRef.current, ...idsLocalmenteAtivos]));
+      setSelectedIds(idsConsolidados);
 
     } catch (error) {
       console.error("Erro na busca da API:", error);
@@ -178,11 +179,13 @@ export default function SearchSubjects() {
         await addSubjects(toAddFlat);
       }
 
-      const idsLocalmentePresentes = Array.from(new Set(mySubjects.map((s) => s.id.replace(/[a-z]/g, ''))));
+      const idsLocalmentePresentes = Array.from(new Set(mySubjects.filter(s => s.subjectId).map((s) => s.subjectId)));
       const toRemoveLocal = idsLocalmentePresentes.filter(id => !selectedIds.includes(id));
 
       for (const subjectId of toRemoveLocal) {
-        await removeSubjectGroup(subjectId);
+        if (subjectId) {
+          await removeSubjectGroup(subjectId);
+        }
       }
 
       router.back();
@@ -224,13 +227,13 @@ export default function SearchSubjects() {
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.statusText, { color: colors.textMuted }]}>Buscando disciplinas na nuvem...</Text>
+          <Text style={[styles.statusText, { color: colors.textMuted }]}>Buscando disciplinas...</Text>
         </View>
       ) : isOffline ? (
         <View style={styles.centerContainer}>
           <WifiOff size={48} color={colors.danger} opacity={0.8} />
           <Text style={[styles.statusText, { color: colors.textMain, fontWeight: '700', marginTop: 12 }]}>Você está offline</Text>
-          <Text style={[styles.statusText, { color: colors.textMuted, textAlign: 'center', marginHorizontal: 30 }]}>Não foi possível carregar as disciplinas.</Text>
+          <Text style={[styles.statusText, { color: colors.textMuted, textAlign: 'center', marginHorizontal: 30 }]}>Não foi possível carregar o catálogo de disciplinas.</Text>
           <TouchableOpacity style={styles.retryButton} onPress={loadData}>
             <Text style={styles.retryText}>Tentar Novamente</Text>
           </TouchableOpacity>
@@ -294,23 +297,84 @@ export default function SearchSubjects() {
 
 const createStyles = (colors: any, isDark: boolean) =>
   StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 24, paddingVertical: 16 },
+    container: {
+      flex: 1,
+      backgroundColor: colors.background
+    },
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      paddingHorizontal: 24,
+      paddingVertical: 16
+    },
     backButton: { marginRight: 16 },
-    title: { fontSize: 20, fontWeight: "800", color: colors.textMain },
-    searchContainer: { flexDirection: "row", alignItems: "center", backgroundColor: colors.card, marginHorizontal: 24, paddingHorizontal: 16, height: 56, borderRadius: 16, borderWidth: 1, borderColor: colors.border, marginBottom: 20 },
+    title: { 
+      fontSize: 20, 
+      fontWeight: "800", 
+      color: colors.textMain
+    },
+    searchContainer: { 
+      flexDirection: "row", 
+      alignItems: "center", 
+      backgroundColor: colors.card, 
+      marginHorizontal: 24, 
+      paddingHorizontal: 16, 
+      height: 56, 
+      borderRadius: 16, 
+      borderWidth: 1, 
+      borderColor: colors.border,
+      marginBottom: 20
+    },
     searchIcon: { marginRight: 12 },
-    input: { flex: 1, fontSize: 16, color: colors.textMain, fontWeight: "500" },
+    input: {
+      flex: 1,
+      fontSize: 16,
+      color: colors.textMain,
+      fontWeight: "500"
+    },
     list: { paddingHorizontal: 24, paddingBottom: 100 },
-    subjectCard: { flexDirection: "row", alignItems: "center", backgroundColor: colors.card, padding: 16, borderRadius: 20, marginBottom: 12, borderWidth: 1, borderColor: "transparent" },
-    selectedCard: { borderColor: colors.accent, backgroundColor: isDark ? 'rgba(16, 185, 129, 0.05)' : colors.softGreen },
+    subjectCard: { 
+      flexDirection: "row", 
+      alignItems: "center", 
+      backgroundColor: colors.card, 
+      padding: 16, 
+      borderRadius: 20, 
+      marginBottom: 12, 
+      borderWidth: 1, 
+      borderColor: "transparent"
+    },
+    selectedCard: { 
+      borderColor: colors.accent, 
+      backgroundColor: isDark ? 'rgba(16, 185, 129, 0.05)' : colors.softGreen
+    },
     info: { flex: 1 },
-    subjectName: { fontSize: 15, fontWeight: "700", color: colors.textMain, marginBottom: 4 },
+    subjectName: { 
+      fontSize: 15, 
+      fontWeight: "700", 
+      color: colors.textMain, 
+      marginBottom: 4
+    
+    },
     subjectDetails: { fontSize: 13, color: colors.textMuted },
-    checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 2, borderColor: colors.border, justifyContent: "center", alignItems: "center" },
+    checkbox: { 
+      width: 24, 
+      height: 24, 
+      borderRadius: 8, 
+      borderWidth: 2, 
+      borderColor: colors.border, 
+      justifyContent: "center", 
+      alignItems: "center"
+    },
     checkboxActive: { backgroundColor: colors.accent, borderColor: colors.accent },
     footer: { position: "absolute", bottom: 40, left: 24, right: 24 },
-    confirmButton: { backgroundColor: colors.primary, height: 60, borderRadius: 20, justifyContent: "center", alignItems: "center", elevation: 8 },
+    confirmButton: { 
+      backgroundColor: colors.primary, 
+      height: 60, 
+      borderRadius: 20, 
+      justifyContent: "center", 
+      alignItems: "center", 
+      elevation: 8
+    },
     confirmText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 },
     statusText: { marginTop: 16, fontSize: 15 },
