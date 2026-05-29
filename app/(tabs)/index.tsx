@@ -1,7 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect} from "react";
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity, StatusBar } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { MapPin, Clock, ChevronRight, CheckCircle2, Calendar, BookOpen } from "lucide-react-native";
+import { MapPin, Clock, ChevronRight, CheckCircle2, Calendar, BookOpen, WifiOff} from "lucide-react-native";
 
 import { useSubjects } from "../../context/SubjectContext";
 import { useTheme } from "../../context/ThemeContext";
@@ -9,12 +9,27 @@ import { getFormattedDate, getToday, timeToMinutes, calculateProgress } from "@/
 import { EmptyState } from "@/components/EmptyState";
 
 import { useAuth } from "../../context/AuthContext";
+import { supabase } from "@/utils/supabase";
 
 export default function HomeScreen() {
 	const { mySubjects } = useSubjects();
 	const { colors, isDark } = useTheme();
 	const { profile } = useAuth();
 	const currentDate = getFormattedDate();
+	const [isOffline, setIsOffline] = useState(false);
+
+	useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        const { error } = await supabase.from('profiles').select('id').limit(1);
+        if (error) throw error;
+        setIsOffline(false);
+      } catch {
+        setIsOffline(true);
+      }
+    };
+    checkConnection();
+  }, []);
 
 	const hojeStatus = useMemo(() => {
 		const diaLongo = getToday();
@@ -53,6 +68,13 @@ export default function HomeScreen() {
 								<Text style={styles.dateText}>{currentDate}</Text>
 							</View>
 						</View>
+
+						{isOffline && (
+							<View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: colors.dangerLight, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12 }}>
+								<WifiOff size={14} color={colors.danger} />
+								<Text style={{ marginLeft: 6, fontSize: 12, fontWeight: '700', color: colors.danger }}>Modo Offline</Text>
+							</View>
+						)}
 					</View>
 				</SafeAreaView>
 
