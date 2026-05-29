@@ -1,237 +1,281 @@
-import React, {
-  createContext,
-  useState,
-  useContext,
-  ReactNode,
-  useEffect,
-} from "react";
+import React, { createContext, useState, useContext, ReactNode, useEffect } from "react";
 import {
-  inicializarBanco,
-  buscarDisciplinasDB,
-  salvarDisciplinaDB,
-  removerDisciplinaDB,
-  buscarNomeUsuarioDB,
-  atualizarNomeUsuarioDB,
+	inicializarBanco,
+	buscarDisciplinasDB,
+	salvarDisciplinaDB,
+	removerDisciplinaDB,
+	buscarNomeUsuarioDB,
+	atualizarNomeUsuarioDB,
+	buscarFilaSyncDB,
+	limparFilaSyncDB,
+	salvarCatalogoDB,
+	registrarAcaoOfflineDB,
 } from "../utils/database";
 import { Subject } from "@/types/Subject";
 import { supabase } from "@/utils/supabase";
 import { useAuth } from "./AuthContext";
 
 const ordemDias: Record<string, number> = {
-  "segunda": 1,
-  "terca": 2,
-  "quarta": 3,
-  "quinta": 4,
-  "sexta": 5,
-  "Segunda-feira": 1,
-  "Terça-feira": 2,
-  "Quarta-feira": 3,
-  "Quinta-feira": 4,
-  "Sexta-feira": 5,
+	segunda: 1,
+	terca: 2,
+	quarta: 3,
+	quinta: 4,
+	sexta: 5,
+	"Segunda-feira": 1,
+	"Terça-feira": 2,
+	"Quarta-feira": 3,
+	"Quinta-feira": 4,
+	"Sexta-feira": 5,
 };
 
 const ordenar = (lista: Subject[]) => {
-  return [...lista].sort((a, b) => {
-    const diaA = ordemDias[a.schedule] ?? 99;
-    const diaB = ordemDias[b.schedule] ?? 99;
+	return [...lista].sort((a, b) => {
+		const diaA = ordemDias[a.schedule] ?? 99;
+		const diaB = ordemDias[b.schedule] ?? 99;
 
-    const diaDiff = diaA - diaB;
-    if (diaDiff !== 0) return diaDiff;
+		const diaDiff = diaA - diaB;
+		if (diaDiff !== 0) return diaDiff;
 
-    return a.timeStart.localeCompare(b.timeStart);
-  });
+		return a.timeStart.localeCompare(b.timeStart);
+	});
 };
 
 interface SubjectContextData {
-  mySubjects: Subject[];
-  userName: string;
-  addSubjects: (subjects: Subject[]) => Promise<void>;
-  removeSubject: (id: string) => Promise<void>;
-  updateUserName: (name: string) => Promise<void>;
-  removeSubjectGroup: (subjectId: string) => Promise<void>;
-  syncGrade: () => Promise<void>;
+	mySubjects: Subject[];
+	userName: string;
+	updateUserName: (name: string) => Promise<void>;
+	syncGrade: () => Promise<void>;
+	saveSubjectChangesOffline: (toAddSubjects: Subject[], addIds: string[], removeIds: string[]) => Promise<void>;
 }
 
-const SubjectContext = createContext<SubjectContextData>(
-  {} as SubjectContextData,
-);
+interface SyncQueueItem {
+	id: string;
+	acao: "ADD" | "REMOVE";
+	disciplina_id: string;
+}
+
+const SubjectContext = createContext<SubjectContextData>({} as SubjectContextData);
 
 export const SubjectProvider = ({ children }: { children: ReactNode }) => {
-  const [mySubjects, setMySubjects] = useState<Subject[]>([]);
-  const [userName, setUserName] = useState<string>("Estudante");
+	const [mySubjects, setMySubjects] = useState<Subject[]>([]);
+	const [userName, setUserName] = useState<string>("Estudante");
 
-  const { session } = useAuth()
+	const { session } = useAuth();
 
-  useEffect(() => {
-    let montado = true;
+	useEffect(() => {
+		let montado = true;
 
-    const inicializarAplicativo = async () => {
-      // 1. CARREGAMENTO OFFLINE-FIRST (Imediato)
-      await inicializarBanco();
-      const dadosDoBanco = (await buscarDisciplinasDB()) as any[];
-      
-      const formatados = dadosDoBanco.map((d) => ({
-        id: d.id,
-        subjectId: d.subject_id,
-        name: d.nome,
-        prof: d.professor,
-        schedule: d.diaSemana,
-        timeStart: d.horaInicio,
-        timeEnd: d.horaFim,
-        location: d.local,
-      }));
+		const inicializarAplicativo = async () => {
+			// 1. CARREGAMENTO OFFLINE-FIRST (Imediato, sem load)
+			await inicializarBanco();
+			const dadosDoBanco = (await buscarDisciplinasDB()) as any[];
 
-      if (montado) {
-        setMySubjects(ordenar(formatados));
-        const nomeSalvo = await buscarNomeUsuarioDB();
-        if (nomeSalvo) setUserName(nomeSalvo);
-      }
+			const formatados = dadosDoBanco.map((d) => ({
+				id: d.id,
+				subjectId: d.subject_id,
+				name: d.nome,
+				prof: d.professor,
+				schedule: d.diaSemana,
+				timeStart: d.horaInicio,
+				timeEnd: d.horaFim,
+				location: d.local,
+			}));
 
-      // 2. BACKGROUND SYNC (Atualiza a grade silenciosamente se houver internet)
-      await syncGrade();
-    };
+			if (montado) {
+				setMySubjects(ordenar(formatados));
+				const nomeSalvo = await buscarNomeUsuarioDB();
+				if (nomeSalvo) setUserName(nomeSalvo);
+			}
 
-    inicializarAplicativo();
+			// 2. BACKGROUND SYNC
+			await syncGrade();
+		};
 
-    return () => {
-      montado = false;
-    };
-  }, []);
+		inicializarAplicativo();
 
-  useEffect(() => {
-    // Toda vez que o ID do usuário mudar (Login ou Logout)
-    if (session?.user) {
-      syncGrade();
-    } else {
-      setMySubjects([]);
-    }
-  }, [session?.user?.id]);
+		return () => {
+			montado = false;
+		};
+	}, []);
 
-  const syncGrade = async () => {
-    try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser();
-      if (authError || !user) return;
+	useEffect(() => {
+		if (session?.user) {
+			syncGrade();
+		} else {
+			setMySubjects([]);
+		}
+	}, [session?.user?.id]);
 
-      const { data: cloudData, error: dbError } = await supabase
-        .from('aluno_disciplinas')
-        .select(`
+	// Função interna que lê a fila local e tenta enviar para o Supabase
+	const processarFilaOffline = async (userId: string) => {
+		const fila = (await buscarFilaSyncDB()) as SyncQueueItem[] | null;
+		if (!fila || fila.length === 0) return;
+
+		for (const item of fila) {
+			try {
+				if (item.acao === "ADD") {
+					const { error } = await supabase.from("aluno_disciplinas").insert({
+						aluno_id: userId,
+						disciplina_id: item.disciplina_id,
+					});
+					// Código 23505 é Unique Violation (já existe no banco), podemos ignorar e remover da fila
+					if (error && error.code !== "23505") throw error;
+				} else if (item.acao === "REMOVE") {
+					const { error } = await supabase
+						.from("aluno_disciplinas")
+						.delete()
+						.match({ aluno_id: userId, disciplina_id: item.disciplina_id });
+					if (error) throw error;
+				}
+
+				// Se a requisição HTTP deu sucesso, apaga o item da fila local!
+				await limparFilaSyncDB(Number(item.id));
+			} catch (e) {
+				// Falha silenciosa: a internet caiu no meio, ele tenta de novo na próxima!
+			}
+		}
+	};
+
+	const syncGrade = async () => {
+		try {
+			const {
+				data: { user },
+				error: authError,
+			} = await supabase.auth.getUser();
+			if (authError || !user) return;
+
+			// 1. TENTA DESPACHAR A FILA PENDENTE ANTES DE ATUALIZAR
+			await processarFilaOffline(user.id);
+
+			// 2. ATUALIZA O CATÁLOGO GERAL (Para o app funcionar 100% offline na busca)
+			const { data: catData, error: catError } = await supabase.from("disciplinas").select(`
+          id, nome, professor, local,
+          horarios_disciplina ( id, dia_semana, hora_inicio, hora_fim )
+        `);
+
+			if (!catError && catData) {
+				const catalogoFormatado = catData.map((d: any) => ({
+					id: d.id,
+					name: d.nome,
+					prof: d.professor,
+					classes: d.horarios_disciplina.map((h: any) => ({
+						id: h.id,
+						schedule: h.dia_semana,
+						timeStart: h.hora_inicio.substring(0, 5),
+						timeEnd: h.hora_fim.substring(0, 5),
+						location: d.local,
+					})),
+				}));
+				await salvarCatalogoDB(catalogoFormatado); // Salva no SQLite
+			}
+
+			// 3. ATUALIZA A GRADE PESSOAL DO ALUNO
+			const { data: cloudData, error: dbError } = await supabase
+				.from("aluno_disciplinas")
+				.select(
+					`
           disciplinas (
             id, nome, professor, local,
             horarios_disciplina ( id, dia_semana, hora_inicio, hora_fim )
           )
-        `)
-        .eq('aluno_id', user.id);
+        `,
+				)
+				.eq("aluno_id", user.id);
 
-      // Se falhar (ex: offline), encerra silenciosamente sem quebrar o app
-      if (dbError) return;
+			if (dbError) return;
 
-      const gradeSincronizada: Subject[] = [];
-      cloudData.forEach((item: any) => {
-        const d = item.disciplinas;
-        if (d && d.horarios_disciplina) {
-          d.horarios_disciplina.forEach((h: any) => {
-            gradeSincronizada.push({
-              id: h.id,
-              subjectId: d.id,
-              name: d.nome,
-              prof: d.professor,
-              schedule: h.dia_semana,
-              timeStart: h.hora_inicio.substring(0, 5),
-              timeEnd: h.hora_fim.substring(0, 5),
-              location: d.local
-            });
-          });
-        }
-      });
+			const gradeSincronizada: Subject[] = [];
+			cloudData.forEach((item: any) => {
+				const d = item.disciplinas;
+				if (d && d.horarios_disciplina) {
+					d.horarios_disciplina.forEach((h: any) => {
+						gradeSincronizada.push({
+							id: h.id,
+							subjectId: d.id,
+							name: d.nome,
+							prof: d.professor,
+							schedule: h.dia_semana,
+							timeStart: h.hora_inicio.substring(0, 5),
+							timeEnd: h.hora_fim.substring(0, 5),
+							location: d.local,
+						});
+					});
+				}
+			});
 
-      const atuaisNoSQLite = (await buscarDisciplinasDB()) as any[];
-      
-      for (const s of atuaisNoSQLite) {
-        await removerDisciplinaDB(s.id);
-      }
+			const atuaisNoSQLite = (await buscarDisciplinasDB()) as any[];
 
-      for (const s of gradeSincronizada) {
-        await salvarDisciplinaDB(s);
-      }
+			for (const s of atuaisNoSQLite) {
+				await removerDisciplinaDB(s.id);
+			}
 
-      setMySubjects(ordenar(gradeSincronizada));
-    } catch {
-      // Falha silenciosa para manter a fluidez do modo offline
-    }
-  };
+			for (const s of gradeSincronizada) {
+				await salvarDisciplinaDB(s);
+			}
 
-  const addSubjects = async (newSubjects: Subject[]) => {
-    try {
-      for (const subject of newSubjects) {
-        await salvarDisciplinaDB(subject);
-      }
+			setMySubjects(ordenar(gradeSincronizada));
+		} catch {
+			// Ignorado para manter a fluidez
+		}
+	};
 
-      setMySubjects((prev) => {
-        const existingIds = new Set(prev.map((s) => s.id));
-        const filteredNew = newSubjects.filter((s) => !existingIds.has(s.id));
-        return ordenar([...prev, ...filteredNew]);
-      });
-    } catch {
-      // Ignorado
-    }
-  };
+	// NOVA FUNÇÃO: O aluno aperta "Salvar" lá na tela de busca. Tudo acontece localmente aqui!
+	const saveSubjectChangesOffline = async (toAddSubjects: Subject[], addIds: string[], removeIds: string[]) => {
+		try {
+			// 1. Grava as remoções locais e enfileira
+			for (const subjectId of removeIds) {
+				await registrarAcaoOfflineDB("REMOVE", subjectId);
 
-  const removeSubject = async (id: string) => {
-    try {
-      await removerDisciplinaDB(id);
-      setMySubjects((prev) => ordenar(prev.filter((s) => s.id !== id)));
-    } catch {
-      // Ignorado
-    }
-  };
+				const slotsParaRemover = mySubjects.filter((s) => s.subjectId === subjectId);
+				for (const slot of slotsParaRemover) {
+					await removerDisciplinaDB(slot.id);
+				}
+			}
 
-  const removeSubjectGroup = async (subjectId: string) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        await supabase
-          .from('aluno_disciplinas')
-          .delete()
-          .match({ aluno_id: user.id, disciplina_id: subjectId });
-      }
+			// 2. Grava as adições locais e enfileira
+			for (const subjectId of addIds) {
+				await registrarAcaoOfflineDB("ADD", subjectId);
+			}
 
-      const slotsParaRemover = mySubjects.filter(s => s.subjectId === subjectId);
-      
-      for (const slot of slotsParaRemover) {
-        await removerDisciplinaDB(slot.id);
-      }
+			for (const subject of toAddSubjects) {
+				await salvarDisciplinaDB(subject);
+			}
 
-      setMySubjects(prev => prev.filter(s => s.subjectId !== subjectId));
-    } catch {
-      // Ignorado
-    }
-  };
+			// 3. Atualiza a tela instantaneamente
+			setMySubjects((prev) => {
+				const afterRemove = prev.filter((s) => !removeIds.includes(s.subjectId));
+				const existingIds = new Set(afterRemove.map((s) => s.id));
+				const filteredNew = toAddSubjects.filter((s) => !existingIds.has(s.id));
+				return ordenar([...afterRemove, ...filteredNew]);
+			});
 
-  const updateUserName = async (newName: string) => {
-    try {
-      await atualizarNomeUsuarioDB(newName);
-      setUserName(newName);
-    } catch {
-      // Ignorado
-    }
-  };
+			// 4. Dispara a sincronização invisível em background
+			syncGrade();
+		} catch (error) {
+			console.error("Erro interno ao salvar offline:", error);
+		}
+	};
 
-  return (
-    <SubjectContext.Provider
-      value={{
-        mySubjects,
-        userName,
-        addSubjects,
-        removeSubject,
-        removeSubjectGroup,
-        updateUserName,
-        syncGrade,
-      }}
-    >
-      {children}
-    </SubjectContext.Provider>
-  );
+	const updateUserName = async (newName: string) => {
+		try {
+			await atualizarNomeUsuarioDB(newName);
+			setUserName(newName);
+		} catch {}
+	};
+
+	return (
+		<SubjectContext.Provider
+			value={{
+				mySubjects,
+				userName,
+				updateUserName,
+				syncGrade,
+				saveSubjectChangesOffline, // Expomos a nova função super poderosa
+			}}
+		>
+			{children}
+		</SubjectContext.Provider>
+	);
 };
 
 export const useSubjects = () => useContext(SubjectContext);
-export { Subject };
