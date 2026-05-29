@@ -66,10 +66,13 @@ export const inicializarBanco = async () => {
 // Salva o catálogo completo baixado do Supabase
 export const salvarCatalogoDB = async (catalogo: any[]) => {
   try {
-    await db.runAsync('DELETE FROM catalogo_disciplinas'); // Limpa o antigo
+    // 1. Limpa a tabela antiga
+    await db.runAsync('DELETE FROM catalogo_disciplinas'); 
+    
+    // 2. Insere os novos dados usando OR REPLACE para evitar travamentos
     for (const item of catalogo) {
       await db.runAsync(
-        'INSERT INTO catalogo_disciplinas (id, data_json) VALUES (?, ?)',
+        'INSERT OR REPLACE INTO catalogo_disciplinas (id, data_json) VALUES (?, ?)',
         [item.id, JSON.stringify(item)]
       );
     }

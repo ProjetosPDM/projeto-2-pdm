@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
-import { View, ActivityIndicator } from "react-native";
+import { View } from "react-native";
 import { Stack, useRouter, useSegments } from "expo-router";
-
-import { SafeAreaProvider} from "react-native-safe-area-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import * as SplashScreen from "expo-splash-screen";
 
 import { SubjectProvider } from "../context/SubjectContext";
 import { ThemeProvider } from "../context/ThemeContext";
 import { AuthProvider, useAuth } from "../context/AuthContext";
 
 import { inicializarBanco } from "@/utils/database";
+
+SplashScreen.preventAutoHideAsync();
 
 function InitialLayout() {
   const { session, profile, isLoading } = useAuth();
@@ -27,40 +29,41 @@ function InitialLayout() {
 
     if (!session) {
       if (!inAuthGroup) {
-        router.replace("/(auth)/login");
+        router.replace("/(auth)/login" as any);
       }
     } else {
       if (profile && !profile.is_approved) {
         const isPendingPage = segments[segments.length - 1] === "pending";
         if (!isPendingPage) {
-          router.replace("/(auth)/pending");
+          router.replace("/(auth)/pending" as any);
         }
       }
       else if (profile?.is_approved) {
         if (profile.role === 'admin') {
           if (!inAdminGroup) {
-            router.replace("/(admin)");
+            router.replace("/(admin)" as any);
           }
         } else {
           if (!inTabsGroup && !inSearchModal) {
-            router.replace("/(tabs)");
+            router.replace("/(tabs)" as any);
           }
         }
       }
     }
+
+    setTimeout(async () => {
+      await SplashScreen.hideAsync();
+    }, 100);
+
   }, [session, profile, isLoading, segments]);
 
   if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#F8FAFB" }}>
-        <ActivityIndicator size="large" color="#10B981" />
-      </View>
-    );
+    return <View style={{ flex: 1, backgroundColor: "#F8FAFB" }} />;
   }
 
   return (
     <View style={{ flex: 1, backgroundColor: "#F8FAFB" }}>
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack screenOptions={{ headerShown: false, animation: "none" }}>
         <Stack.Screen name="(auth)" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="(admin)" />

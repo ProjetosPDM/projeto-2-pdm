@@ -46,6 +46,7 @@ interface SubjectContextData {
 	updateUserName: (name: string) => Promise<void>;
 	syncGrade: () => Promise<void>;
 	saveSubjectChangesOffline: (toAddSubjects: Subject[], addIds: string[], removeIds: string[]) => Promise<void>;
+	removeSubject: (slotId: string) => Promise<void>; // <--- ADICIONADO DE VOLTA
 }
 
 interface SyncQueueItem {
@@ -66,7 +67,6 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 		let montado = true;
 
 		const inicializarAplicativo = async () => {
-			// 1. CARREGAMENTO OFFLINE-FIRST (Imediato, sem load)
 			await inicializarBanco();
 			const dadosDoBanco = (await buscarDisciplinasDB()) as any[];
 
@@ -87,7 +87,6 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 				if (nomeSalvo) setUserName(nomeSalvo);
 			}
 
-			// 2. BACKGROUND SYNC
 			await syncGrade();
 		};
 
@@ -106,7 +105,6 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 		}
 	}, [session?.user?.id]);
 
-	// Função interna que lê a fila local e tenta enviar para o Supabase
 	const processarFilaOffline = async (userId: string) => {
 		const fila = (await buscarFilaSyncDB()) as SyncQueueItem[] | null;
 		if (!fila || fila.length === 0) return;
@@ -118,7 +116,6 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 						aluno_id: userId,
 						disciplina_id: item.disciplina_id,
 					});
-					// Código 23505 é Unique Violation (já existe no banco), podemos ignorar e remover da fila
 					if (error && error.code !== "23505") throw error;
 				} else if (item.acao === "REMOVE") {
 					const { error } = await supabase
@@ -128,26 +125,20 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 					if (error) throw error;
 				}
 
-				// Se a requisição HTTP deu sucesso, apaga o item da fila local!
 				await limparFilaSyncDB(Number(item.id));
 			} catch (e) {
-				// Falha silenciosa: a internet caiu no meio, ele tenta de novo na próxima!
+				// Falha silenciosa
 			}
 		}
 	};
 
 	const syncGrade = async () => {
 		try {
-			const {
-				data: { user },
-				error: authError,
-			} = await supabase.auth.getUser();
+			const { data: { user }, error: authError } = await supabase.auth.getUser();
 			if (authError || !user) return;
 
-			// 1. TENTA DESPACHAR A FILA PENDENTE ANTES DE ATUALIZAR
 			await processarFilaOffline(user.id);
 
-			// 2. ATUALIZA O CATÁLOGO GERAL (Para o app funcionar 100% offline na busca)
 			const { data: catData, error: catError } = await supabase.from("disciplinas").select(`
           id, nome, professor, local,
           horarios_disciplina ( id, dia_semana, hora_inicio, hora_fim )
@@ -166,20 +157,17 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 						location: d.local,
 					})),
 				}));
-				await salvarCatalogoDB(catalogoFormatado); // Salva no SQLite
+				await salvarCatalogoDB(catalogoFormatado);
 			}
 
-			// 3. ATUALIZA A GRADE PESSOAL DO ALUNO
 			const { data: cloudData, error: dbError } = await supabase
 				.from("aluno_disciplinas")
-				.select(
-					`
+				.select(`
           disciplinas (
             id, nome, professor, local,
             horarios_disciplina ( id, dia_semana, hora_inicio, hora_fim )
           )
-        `,
-				)
+        `)
 				.eq("aluno_id", user.id);
 
 			if (dbError) return;
@@ -215,14 +203,12 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 
 			setMySubjects(ordenar(gradeSincronizada));
 		} catch {
-			// Ignorado para manter a fluidez
+			// Ignorado
 		}
 	};
 
-	// NOVA FUNÇÃO: O aluno aperta "Salvar" lá na tela de busca. Tudo acontece localmente aqui!
 	const saveSubjectChangesOffline = async (toAddSubjects: Subject[], addIds: string[], removeIds: string[]) => {
 		try {
-			// 1. Grava as remoções locais e enfileira
 			for (const subjectId of removeIds) {
 				await registrarAcaoOfflineDB("REMOVE", subjectId);
 
@@ -232,7 +218,6 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 				}
 			}
 
-			// 2. Grava as adições locais e enfileira
 			for (const subjectId of addIds) {
 				await registrarAcaoOfflineDB("ADD", subjectId);
 			}
@@ -241,7 +226,6 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 				await salvarDisciplinaDB(subject);
 			}
 
-			// 3. Atualiza a tela instantaneamente
 			setMySubjects((prev) => {
 				const afterRemove = prev.filter((s) => !removeIds.includes(s.subjectId));
 				const existingIds = new Set(afterRemove.map((s) => s.id));
@@ -249,10 +233,37 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 				return ordenar([...afterRemove, ...filteredNew]);
 			});
 
-			// 4. Dispara a sincronização invisível em background
 			syncGrade();
 		} catch (error) {
-			console.error("Erro interno ao salvar offline:", error);
+			console.error("Erro ao salvar offline:", error);
+		}
+	};
+
+	// NOVA FUNÇÃO CORRIGIDA: Lixeira da tela de grade
+	const removeSubject = async (slotId: string) => {
+		try {
+			// 1. Encontra qual é a matéria "Pai" deste horário
+			const slot = mySubjects.find((s) => s.id === slotId);
+			if (!slot || !slot.subjectId) return;
+
+			const subjectIdToRemove = slot.subjectId;
+
+			// 2. Coloca na fila para avisar o Supabase depois (Offline-First)
+			await registrarAcaoOfflineDB("REMOVE", subjectIdToRemove);
+
+			// 3. Remove todos os dias/horários dessa matéria do SQLite local
+			const slotsParaRemover = mySubjects.filter((s) => s.subjectId === subjectIdToRemove);
+			for (const s of slotsParaRemover) {
+				await removerDisciplinaDB(s.id);
+			}
+
+			// 4. Atualiza a tela imediatamente
+			setMySubjects((prev) => prev.filter((s) => s.subjectId !== subjectIdToRemove));
+
+			// 5. Tenta enviar pro Supabase em background
+			syncGrade();
+		} catch (error) {
+			console.error("Erro ao remover:", error);
 		}
 	};
 
@@ -270,7 +281,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 				userName,
 				updateUserName,
 				syncGrade,
-				saveSubjectChangesOffline, // Expomos a nova função super poderosa
+				saveSubjectChangesOffline,
+				removeSubject, // <--- ADICIONADO AQUI
 			}}
 		>
 			{children}
