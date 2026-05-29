@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "Projeto1PDM",
+    "name": "Horário IFPB",
     "slug": "Projeto1PDM",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -11,6 +11,7 @@
       "supportsTablet": true
     },
     "android": {
+      "package": "br.edu.ifpb.horario",
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -39,11 +40,17 @@
         }
       ],
       "expo-sqlite",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      "expo-web-browser"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "19452839-121e-43d5-a5eb-0dc09705de93"
+      }
     }
   }
 }
