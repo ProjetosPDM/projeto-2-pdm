@@ -46,7 +46,8 @@ interface SubjectContextData {
 	updateUserName: (name: string) => Promise<void>;
 	syncGrade: () => Promise<void>;
 	saveSubjectChangesOffline: (toAddSubjects: Subject[], addIds: string[], removeIds: string[]) => Promise<void>;
-	removeSubject: (slotId: string) => Promise<void>; // <--- ADICIONADO DE VOLTA
+	removeSubject: (slotId: string) => Promise<void>;
+	removeSubjectGroup: (subjectId: string) => Promise<void>; // <--- GARANTIDO NA INTERFACE
 }
 
 interface SyncQueueItem {
@@ -239,31 +240,41 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 		}
 	};
 
-	// NOVA FUNÇÃO CORRIGIDA: Lixeira da tela de grade
+	// 1. RECOLOCADA E CORRIGIDA: Exclusão por ID do grupo de disciplinas (Matéria Completa)
+	const removeSubjectGroup = async (subjectId: string) => {
+		try {
+			if (!subjectId) return;
+
+			// Enfileira a remoção para o Supabase processar depois
+			await registrarAcaoOfflineDB("REMOVE", subjectId);
+
+			// Remove do SQLite local todos os horários da matéria
+			const slotsParaRemover = mySubjects.filter((s) => s.subjectId === subjectId);
+			for (const slot of slotsParaRemover) {
+				await removerDisciplinaDB(slot.id);
+			}
+
+			// Atualiza o estado visual imediatamente
+			setMySubjects((prev) => prev.filter((s) => s.subjectId !== subjectId));
+
+			// Tenta sincronizar em background
+			syncGrade();
+		} catch (error) {
+			// Ignorado silenciosamente
+		}
+	};
+
+	// 2. RECOLOCADA E CORRIGIDA: Exclusão por ID do slot de horário (Lixeira do Card)
 	const removeSubject = async (slotId: string) => {
 		try {
-			// 1. Encontra qual é a matéria "Pai" deste horário
+			// Encontra o horário na grade para descobrir o ID da matéria pai (subjectId)
 			const slot = mySubjects.find((s) => s.id === slotId);
 			if (!slot || !slot.subjectId) return;
 
-			const subjectIdToRemove = slot.subjectId;
-
-			// 2. Coloca na fila para avisar o Supabase depois (Offline-First)
-			await registrarAcaoOfflineDB("REMOVE", subjectIdToRemove);
-
-			// 3. Remove todos os dias/horários dessa matéria do SQLite local
-			const slotsParaRemover = mySubjects.filter((s) => s.subjectId === subjectIdToRemove);
-			for (const s of slotsParaRemover) {
-				await removerDisciplinaDB(s.id);
-			}
-
-			// 4. Atualiza a tela imediatamente
-			setMySubjects((prev) => prev.filter((s) => s.subjectId !== subjectIdToRemove));
-
-			// 5. Tenta enviar pro Supabase em background
-			syncGrade();
+			// Delega a exclusão para o removeSubjectGroup
+			await removeSubjectGroup(slot.subjectId);
 		} catch (error) {
-			console.error("Erro ao remover:", error);
+			// Ignorado silenciosamente
 		}
 	};
 
@@ -282,7 +293,8 @@ export const SubjectProvider = ({ children }: { children: ReactNode }) => {
 				updateUserName,
 				syncGrade,
 				saveSubjectChangesOffline,
-				removeSubject, // <--- ADICIONADO AQUI
+				removeSubject,     
+				removeSubjectGroup,
 			}}
 		>
 			{children}
