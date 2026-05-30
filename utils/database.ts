@@ -69,7 +69,7 @@ export const salvarCatalogoDB = async (catalogo: any[]) => {
     // 1. Limpa a tabela antiga
     await db.runAsync('DELETE FROM catalogo_disciplinas'); 
     
-    // 2. Insere os novos dados usando OR REPLACE para evitar travamentos
+    // 2. Insere os novos dados
     for (const item of catalogo) {
       await db.runAsync(
         'INSERT OR REPLACE INTO catalogo_disciplinas (id, data_json) VALUES (?, ?)',
@@ -91,7 +91,7 @@ export const buscarCatalogoDB = async () => {
   }
 };
 
-// Adiciona uma ação na fila (Ex: acao='ADD', disciplina_id='1234')
+// Adiciona uma ação na fila
 export const registrarAcaoOfflineDB = async (acao: 'ADD' | 'REMOVE', disciplina_id: string) => {
   try {
     await db.runAsync(
