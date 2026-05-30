@@ -13,9 +13,7 @@ interface ConflictModalProps {
   timeEnd: string;
 }
 
-export const ConflictModal = ({
-                                visible, onClose, newSubject, conflictingSubject, schedule, timeStart, timeEnd
-                              }: ConflictModalProps) => {
+export const ConflictModal = ({ visible, onClose, newSubject, conflictingSubject, schedule, timeStart, timeEnd }: ConflictModalProps) => {
   const { colors } = useTheme();
 
   return (
