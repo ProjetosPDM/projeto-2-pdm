@@ -24,7 +24,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const carregarPerfil = async (userId: string, userEmail: string) => {
     try {
-      const { data } = await authService.getProfile(userId);
+      const { data, error} = await authService.getProfile(userId);
+
+      if (error) {
+        throw error;
+      }
+      
       if (data) {
         const profileWithEmail: UserProfile = {
           ...data,
@@ -64,7 +69,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data: { session }, error }) => {
       if (error) {
-        console.error("Erro de Sessão (Token Inválido):", error.message);
+        try {
+          await supabase.auth.signOut();
+        } catch {
+          // Ignorado silenciosamente
+        }
         await limparCacheSessaoDB();
         setSession(null);
         setUser(null);

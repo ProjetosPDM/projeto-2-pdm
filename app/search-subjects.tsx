@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,11 +6,10 @@ import {
   TextInput,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
+  ActivityIndicator
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Search, X, Check, ArrowLeft, WifiOff } from "lucide-react-native";
+import { Search, X, Check, ArrowLeft } from "lucide-react-native";
 import { useRouter } from "expo-router";
 
 import { useTheme } from "../context/ThemeContext";
@@ -18,27 +17,22 @@ import { Subject } from "@/types/Subject";
 import { useSubjects } from "@/context/SubjectContext";
 import { verificaChoqueHorario } from "@/utils/date";
 import { ConflictModal } from "@/components/ConflictModal";
-
-import { supabase } from "@/utils/supabase";
-import { useAuth } from "@/context/AuthContext";
+import { buscarCatalogoDB } from "@/utils/database";
 
 export default function SearchSubjects() {
   const router = useRouter();
-  const { addSubjects, removeSubjectGroup, mySubjects } = useSubjects();
+  const { mySubjects, saveSubjectChangesOffline } = useSubjects();
   const { colors, isDark } = useTheme();
-  const { session } = useAuth();
 
   const [dbSubjects, setDbSubjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [isOffline, setIsOffline] = useState(false);
 
   const [searchText, setSearchText] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  
+  const [initialIds, setInitialIds] = useState<string[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
-  
-  const cloudInitialIdsRef = useRef<string[]>([]);
-
   const [conflictData, setConflictData] = useState<any>(null);
   const [showConflictModal, setShowConflictModal] = useState(false);
 
@@ -47,52 +41,23 @@ export default function SearchSubjects() {
   }, []);
 
   const loadData = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setIsOffline(false);
+      // 1. LÊ O CATÁLOGO OFFLINE
+      const catalogoLocal = await buscarCatalogoDB();
+      setDbSubjects(catalogoLocal);
 
-      const { data: disciplinasData, error: errorDisc } = await supabase
-        .from('disciplinas')
-        .select(`
-          id, nome, professor, local,
-          horarios_disciplina ( id, dia_semana, hora_inicio, hora_fim )
-        `);
-
-      if (errorDisc) throw errorDisc;
-
-      const { data: cloudData, error: errorCloud } = await supabase
-        .from('aluno_disciplinas')
-        .select('disciplina_id')
-        .eq('aluno_id', session?.user?.id);
-
-      if (errorCloud) throw errorCloud;
-
-      const formattedData = disciplinasData.map((d: any) => ({
-        id: d.id,
-        name: d.nome,
-        prof: d.professor,
-        classes: d.horarios_disciplina.map((h: any) => ({
-          id: h.id,
-          schedule: h.dia_semana,
-          timeStart: h.hora_inicio.substring(0, 5),
-          timeEnd: h.hora_fim.substring(0, 5),
-          location: d.local,
-        }))
-      }));
-
-      setDbSubjects(formattedData);
-      cloudInitialIdsRef.current = cloudData.map((m: any) => m.disciplina_id);
-
+      // 2. RECUPERA AS MARCAÇÕES ATUAIS DO ALUNO
+      // Pega os subjectIds das matérias que já estão na grade dele
       const idsLocalmenteAtivos = Array.from(
-        new Set(mySubjects.filter(s => s.subjectId).map((s) => s.subjectId))
+        new Set(mySubjects.filter((s) => s.subjectId).map((s) => s.subjectId))
       );
       
-      const idsConsolidados = Array.from(new Set([...cloudInitialIdsRef.current, ...idsLocalmenteAtivos]));
-      setSelectedIds(idsConsolidados);
+      setSelectedIds(idsLocalmenteAtivos);
+      setInitialIds(idsLocalmenteAtivos);
 
     } catch (error) {
-      console.error("Erro na busca da API:", error);
-      setIsOffline(true);
+      console.error("Erro ao carregar catálogo offline:", error);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +77,9 @@ export default function SearchSubjects() {
 
     const disciplinaDesejada = dbSubjects.find(d => d.id === idSelecionado);
     const disciplinasJaMarcadas = dbSubjects.filter(d => selectedIds.includes(d.id));
-    const aulasJaMarcadas = disciplinasJaMarcadas.flatMap(d => d.classes.map((c: any) => ({...c, nomeDisciplina: d.name})));
+    const aulasJaMarcadas = disciplinasJaMarcadas.flatMap(d => 
+      d.classes.map((c: any) => ({...c, nomeDisciplina: d.name}))
+    );
 
     if (disciplinaDesejada) {
       for (const aulaNova of disciplinaDesejada.classes) {
@@ -136,31 +103,16 @@ export default function SearchSubjects() {
   };
 
   const handleConfirm = async () => {
-    if (!session?.user?.id) return;
     setIsSaving(true);
 
     try {
-      const cloudIds = cloudInitialIdsRef.current;
+      // O que o aluno marcou agora e NÃO estava marcado antes (Adicionar)
+      const toAddIds = selectedIds.filter(id => !initialIds.includes(id));
       
-      const toAddIds = selectedIds.filter(id => !cloudIds.includes(id));
-      const toRemoveIds = cloudIds.filter(id => !selectedIds.includes(id));
+      // O que o aluno desmarcou agora e ESTAVA marcado antes (Remover)
+      const toRemoveIds = initialIds.filter(id => !selectedIds.includes(id));
 
-      if (toRemoveIds.length > 0) {
-        await supabase
-          .from('aluno_disciplinas')
-          .delete()
-          .eq('aluno_id', session.user.id)
-          .in('disciplina_id', toRemoveIds);
-      }
-
-      if (toAddIds.length > 0) {
-        const inserts = toAddIds.map(dId => ({
-          aluno_id: session.user.id,
-          disciplina_id: dId
-        }));
-        await supabase.from('aluno_disciplinas').insert(inserts);
-      }
-
+      // Montar a lista formatada do que deve ser adicionado
       const toAddGrouped = dbSubjects.filter(s => toAddIds.includes(s.id));
       const toAddFlat: Subject[] = toAddGrouped.flatMap(subject => 
         subject.classes.map((aula: any) => ({
@@ -175,24 +127,12 @@ export default function SearchSubjects() {
         }))
       );
 
-      if (toAddFlat.length > 0) {
-        await addSubjects(toAddFlat);
-      }
-
-      const idsLocalmentePresentes = Array.from(new Set(mySubjects.filter(s => s.subjectId).map((s) => s.subjectId)));
-      const toRemoveLocal = idsLocalmentePresentes.filter(id => !selectedIds.includes(id));
-
-      for (const subjectId of toRemoveLocal) {
-        if (subjectId) {
-          await removeSubjectGroup(subjectId);
-        }
-      }
+      // Chama a função central do SubjectContext que cuida do SQLite e da Fila (SyncQueue)
+      await saveSubjectChangesOffline(toAddFlat, toAddIds, toRemoveIds);
 
       router.back();
 
     } catch (error) {
-      console.error("Erro ao sincronizar:", error);
-      Alert.alert("Erro", "Não foi possível salvar as alterações. Verifique sua conexão.");
       setIsSaving(false);
     }
   };
@@ -227,16 +167,14 @@ export default function SearchSubjects() {
       {isLoading ? (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={colors.primary} />
-          <Text style={[styles.statusText, { color: colors.textMuted }]}>Buscando disciplinas...</Text>
+          <Text style={[styles.statusText, { color: colors.textMuted }]}>Carregando catálogo...</Text>
         </View>
-      ) : isOffline ? (
+      ) : dbSubjects.length === 0 ? (
         <View style={styles.centerContainer}>
-          <WifiOff size={48} color={colors.danger} opacity={0.8} />
-          <Text style={[styles.statusText, { color: colors.textMain, fontWeight: '700', marginTop: 12 }]}>Você está offline</Text>
-          <Text style={[styles.statusText, { color: colors.textMuted, textAlign: 'center', marginHorizontal: 30 }]}>Não foi possível carregar o catálogo de disciplinas.</Text>
-          <TouchableOpacity style={styles.retryButton} onPress={loadData}>
-            <Text style={styles.retryText}>Tentar Novamente</Text>
-          </TouchableOpacity>
+          <Text style={[styles.statusText, { color: colors.textMuted, textAlign: 'center', marginHorizontal: 30 }]}>
+            O catálogo de disciplinas ainda não foi sincronizado com o seu dispositivo. 
+            Conecte-se à internet na tela inicial para baixar as matérias.
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -266,7 +204,7 @@ export default function SearchSubjects() {
         />
       )}
 
-      {!isLoading && !isOffline && (
+      {!isLoading && dbSubjects.length > 0 && (
         <View style={styles.footer}>
           <TouchableOpacity
             style={styles.confirmButton}
@@ -274,7 +212,7 @@ export default function SearchSubjects() {
             disabled={isSaving}
           >
             <Text style={styles.confirmText}>
-              {isSaving ? 'Sincronizando...' : `Confirmar Alterações (${selectedIds.length})`}
+              {isSaving ? 'Salvando...' : `Confirmar Alterações (${selectedIds.length})`}
             </Text>
           </TouchableOpacity>
         </View>
@@ -377,7 +315,5 @@ const createStyles = (colors: any, isDark: boolean) =>
     },
     confirmText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800" },
     centerContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingBottom: 100 },
-    statusText: { marginTop: 16, fontSize: 15 },
-    retryButton: { marginTop: 24, backgroundColor: colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12 },
-    retryText: { color: "#FFFFFF", fontWeight: '700', fontSize: 15 }
+    statusText: { marginTop: 16, fontSize: 15 }
   });

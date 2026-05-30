@@ -19,7 +19,7 @@ import { useAuth } from "../../context/AuthContext";
 
 export default function AdminProfileScreen() {
 	const { colors, isDark, themeMode, setThemeMode } = useTheme();
-	const { profile, signOut } = useAuth(); // Usando profile do Supabase
+	const { profile, signOut } = useAuth();
 
 	const [modalTemaVisivel, setModalTemaVisivel] = useState(false);
 
@@ -70,7 +70,7 @@ export default function AdminProfileScreen() {
 					</View>
 
 					<View style={styles.actionsContainer}>
-						{/* Exibição do E-mail (Somente leitura) */}
+						{/* Exibição do E-mail */}
 						<View style={styles.actionButtonStatic}>
 							<View style={styles.actionIcon}>
 								<Mail size={20} color={colors.textMain} />
@@ -107,7 +107,7 @@ export default function AdminProfileScreen() {
 					</View>
 				</ScrollView>
 
-				{/* Modal de Tema (Idêntico ao do Aluno) */}
+				{/* Modal de Tema */}
 				<Modal visible={modalTemaVisivel} transparent={true} animationType="fade" onRequestClose={() => setModalTemaVisivel(false)}>
 					<View style={styles.modalOverlay}>
 						<Pressable style={styles.modalBackdrop} onPress={() => setModalTemaVisivel(false)} />
