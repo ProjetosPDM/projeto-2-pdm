@@ -30,7 +30,6 @@ export default function SearchSubjects() {
   const [searchText, setSearchText] = useState("");
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   
-  // Guardamos o que já estava marcado quando a tela abriu para saber o que mudou
   const [initialIds, setInitialIds] = useState<string[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
@@ -44,7 +43,7 @@ export default function SearchSubjects() {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      // 1. LÊ O CATÁLOGO OFFLINE (Sincronizado anteriormente em background)
+      // 1. LÊ O CATÁLOGO OFFLINE
       const catalogoLocal = await buscarCatalogoDB();
       setDbSubjects(catalogoLocal);
 
@@ -55,7 +54,7 @@ export default function SearchSubjects() {
       );
       
       setSelectedIds(idsLocalmenteAtivos);
-      setInitialIds(idsLocalmenteAtivos); // Guarda como referência original
+      setInitialIds(idsLocalmenteAtivos);
 
     } catch (error) {
       console.error("Erro ao carregar catálogo offline:", error);
@@ -131,7 +130,6 @@ export default function SearchSubjects() {
       // Chama a função central do SubjectContext que cuida do SQLite e da Fila (SyncQueue)
       await saveSubjectChangesOffline(toAddFlat, toAddIds, toRemoveIds);
 
-      // Fecha o modal e volta para a tela inicial instantaneamente!
       router.back();
 
     } catch (error) {
