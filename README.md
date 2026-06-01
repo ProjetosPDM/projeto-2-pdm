@@ -1,50 +1,134 @@
-# Welcome to your Expo app 👋
+# Horário de Bolso IFPB
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+O projeto consiste no desenvolvimento de um aplicativo móvel voltado para os estudantes do IFPB, com o objetivo de facilitar a consulta rápida ao horário e local das aulas, eliminando a necessidade de acessar PDFs ou o sistema SUAP no cotidiano.
 
-## Get started
+O aplicativo funciona como um "horário de bolso" personalizado, atendendo inclusive alunos com grades de horários variadas. O sistema possui dois perfis: o administrador, responsável por gerenciar as disciplinas, salas, horários e aprovar o acesso de novos usuários; e o aluno, que seleciona suas disciplinas para gerar uma grade automática.
 
-1. Install dependencies
+## Visão Geral
 
-   ```bash
-   npm install
-   ```
+- O administrador cadastra e remove disciplinas, definindo nome da matéria, professor, dias da semana, horários e local das aulas (salas ou laboratórios).
+- O administrador também controla o acesso ao sistema, aprovando ou rejeitando contas de alunos após o cadastro.
+- O aluno busca e seleciona suas disciplinas no primeiro acesso.
+- A partir dessa seleção, o aplicativo monta automaticamente a grade personalizada do estudante.
+- Na tela inicial, o app exibe os cards das aulas do dia com informações de professor, horário e bloco.
+- O sistema destaca automaticamente a "Aula Atual" com base no relógio do dispositivo.
+- O app funciona offline após a configuração inicial, armazenando os dados localmente para acesso rápido sem conexão constante.
 
-2. Start the app
+## Como executar
 
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+1. Instale as dependências:
 
 ```bash
-npm run reset-project
+npm install
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Inicie o projeto:
 
-## Learn more
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+3. Abra no emulador ou em um dispositivo usando Expo Go.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Releases e Downloads
 
-## Join the community
+O aplicativo compilado em APK está disponível na seção [Releases](https://github.com/ProjetosPDM/projeto-2-pdm/releases) do repositório. Você pode fazer download do APK e instalá-lo diretamente em um dispositivo Android.
 
-Join our community of developers creating universal apps.
+## Configuração do .env
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Para que o aplicativo funcione corretamente, configure as variáveis de ambiente criando um arquivo `.env` na raiz do projeto:
+
+```
+EXPO_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+EXPO_PUBLIC_SUPABASE_KEY=your-anon-key
+```
+
+Substitua pelos valores da sua conta Supabase:
+- `EXPO_PUBLIC_SUPABASE_URL`: URL do seu projeto Supabase
+- `EXPO_PUBLIC_SUPABASE_KEY`: Chave anônima pública do Supabase
+
+## Estrutura do projeto
+
+```
+projeto-2-pdm/
+├── app/
+│   ├── _layout.tsx                 # Layout raiz da aplicação
+│   ├── search-subjects.tsx         # Tela de busca de disciplinas
+│   ├── (admin)/                    # Grupo de rotas administrativas
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx               # Dashboard do administrador
+│   │   ├── alunos.tsx              # Gerenciamento de alunos
+│   │   └── perfil.tsx              # Perfil do administrador
+│   ├── (auth)/                     # Grupo de rotas de autenticação
+│   │   ├── _layout.tsx
+│   │   ├── login.tsx               # Tela de login
+│   │   ├── register.tsx            # Tela de cadastro
+│   │   └── pending.tsx             # Status de aprovação pendente
+│   └── (tabs)/                     # Grupo de rotas com abas
+│       ├── _layout.tsx
+│       ├── index.tsx               # Tela inicial (horário do dia)
+│       ├── grade.tsx               # Grade completa de disciplinas
+│       └── perfil.tsx              # Perfil do aluno
+├── components/
+│   ├── ConflictModal.tsx           # Modal para conflitos de horário
+│   ├── EmptyState.tsx              # Componente para estados vazios
+│   └── ScheduleCard.tsx            # Card de aula
+├── context/
+│   ├── AuthContext.tsx             # Contexto de autenticação
+│   ├── SubjectContext.tsx          # Contexto de disciplinas
+│   └── ThemeContext.tsx            # Contexto de tema (dark/light)
+├── services/
+│   ├── authService.ts              # Autenticação e gerenciamento de usuários
+│   ├── adminService.ts             # Operações de administração
+│   └── subjectService.ts           # CRUD de disciplinas
+├── utils/
+│   ├── database.ts                 # Configurações do banco local
+│   ├── date.ts                     # Utilitários de data e hora
+│   └── supabase.ts                 # Cliente Supabase
+├── types/
+│   ├── User.ts                     # Tipo de usuário
+│   ├── Subject.ts                  # Tipo de disciplina
+│   └── SubjectSearch.ts            # Tipo de busca de disciplinas
+├── data/
+│   └── mockDisciplinas.ts          # Dados de exemplo
+├── assets/
+│   └── images/                     # Imagens da aplicação
+├── constants/
+│   └── Colors.ts                   # Paleta de cores
+└── package.json                    # Dependências do projeto
+```
+
+### Descrição das pastas principais:
+
+- **app/** - Estrutura de rotas usando Expo Router com autenticação, admin e abas.
+- **components/** - Componentes reutilizáveis da interface (cards, modais, estados vazios).
+- **context/** - Gerenciamento global de estado com Context API.
+- **services/** - Lógica de negócio e integrações com API/Supabase.
+- **utils/** - Funções auxiliares para datas, banco de dados e Supabase.
+- **types/** - Definições TypeScript para garantir segurança de tipos.
+- **constants/** - Valores constantes como cores e configurações.
+
+## Tecnologias
+
+- Expo
+- React Native
+- TypeScript
+- Supabase para backend
+- Armazenamento local com SQLite para suporte offline
+
+## Autores
+
+**Alison Andrade**
+
+- GitHub: [https://github.com/AlisonAndrade123](https://github.com/AlisonAndrade123)
+- LinkedIn: [https://www.linkedin.com/in/alison-andrade-b23621308/](https://www.linkedin.com/in/alison-andrade-b23621308/)
+
+**Dário Matias**
+
+- GitHub: [https://github.com/dariomatias-dev](https://github.com/dariomatias-dev)
+- LinkedIn: [https://linkedin.com/in/dariomatias-dev](https://linkedin.com/in/dariomatias-dev)
+
+**José Arthur Almeida**
+
+- GitHub: [https://github.com/JoseArthurAlmeida](https://github.com/JoseArthurAlmeida)
+- LinkedIn: [https://www.linkedin.com/in/jose-arthur-araujo-almeida/](https://www.linkedin.com/in/jose-arthur-araujo-almeida/)
